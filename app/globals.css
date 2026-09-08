@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+@theme {
+  --color-teal: #00a5af;
+  --color-teal-dark: #007e86;
+  --color-teal-tint: #e6f6f7;
+  --color-silver: #bbbdc0;
+  --color-silver-light: #e8e9ea;
+  --color-silver-bg: #f6f7f7;
+  --color-ink: #000000;
+  --color-ink-60: #5a5c5e;
+
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+}
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  background: var(--color-silver-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Numbers in tables should line up. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
