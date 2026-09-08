@@ -1,5 +1,6 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
+import seed from "../data/seed.json";
 import type { Bucket, IngestReport, Review } from "./types";
 
 export type ImportRecord = {
@@ -9,8 +10,17 @@ export type ImportRecord = {
   report: IngestReport;
 };
 
+export class ReadOnlyStoreError extends Error {
+  constructor() {
+    super(
+      "This deployment has no database, so it is showing a bundled snapshot and cannot accept new data. Set DATABASE_URL to a Postgres connection string to enable imports.",
+    );
+    this.name = "ReadOnlyStoreError";
+  }
+}
+
 export interface Store {
-  kind: "postgres" | "file";
+  kind: "postgres" | "file" | "snapshot";
   init(): Promise<void>;
   insertReviews(
     rows: Review[],
@@ -240,6 +250,47 @@ function fileStore(path: string): Store {
   };
 }
 
+/* ------------------------------------------------------------------ snapshot */
+
+/**
+ * What a deployment falls back to when no DATABASE_URL is configured.
+ *
+ * Vercel's filesystem is read-only, so the file store cannot run there at all.
+ * Rather than serve an empty dashboard, we serve the export baked in at build
+ * time by scripts/build-seed.ts — the whole thing works and is honest about
+ * being a snapshot. Imports are refused with an explanation rather than a 500.
+ */
+function snapshotStore(): Store {
+  const reviews = (seed.reviews as unknown as Review[])
+    .slice()
+    .sort((a, b) => b.reviewDate.localeCompare(a.reviewDate));
+
+  return {
+    kind: "snapshot",
+    async init() {},
+    async insertReviews() {
+      throw new ReadOnlyStoreError();
+    },
+    async allReviews() {
+      return reviews;
+    },
+    async setBuckets() {
+      throw new ReadOnlyStoreError();
+    },
+    async recordImport() {
+      throw new ReadOnlyStoreError();
+    },
+    async listImports() {
+      return [];
+    },
+    async clear() {
+      throw new ReadOnlyStoreError();
+    },
+  };
+}
+
+export const snapshotGeneratedAt = seed.generatedAt as string;
+
 /* -------------------------------------------------------------------- picker */
 
 let cached: Store | null = null;
@@ -247,11 +298,15 @@ let cached: Store | null = null;
 export function getStore(): Store {
   if (cached) return cached;
   const url = process.env.DATABASE_URL;
-  cached = url
-    ? postgresStore(url)
-    : fileStore(join(process.cwd(), ".data", "store.json"));
+  if (url) {
+    cached = postgresStore(url);
+  } else if (process.env.VERCEL) {
+    cached = snapshotStore();
+  } else {
+    cached = fileStore(join(process.cwd(), ".data", "store.json"));
+  }
   return cached;
 }
 
-export const usingEphemeralStore = () =>
-  !process.env.DATABASE_URL && process.env.NODE_ENV === "production";
+/** True when the dashboard is serving the baked-in snapshot, not live data. */
+export const usingSnapshot = () => getStore().kind === "snapshot";

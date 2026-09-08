@@ -124,16 +124,30 @@ dashboard do not change.
 
 ## Deploying
 
-Built for Vercel:
+Live on Vercel, deployed from `master`. Every push redeploys.
 
-1. Push the repo, import it in Vercel
-2. Add `APP_PASSWORD`, `AUTH_SECRET` and `DATABASE_URL` as environment variables
-3. Deploy, then import the workbooks through the UI
+`APP_PASSWORD` and `AUTH_SECRET` are set in **`vercel.json`** so the deployment
+works without any dashboard setup. That is fine for a private repo and a demo
+link, and it is the first thing to change for anything longer-lived: add the
+two as project environment variables in the Vercel dashboard (those take
+precedence over `vercel.json`) and drop the `env` block from the file.
 
-`DATABASE_URL` should point at a Neon Postgres database. Tables are created on
-first use — there is no migration step. **Without `DATABASE_URL` the app writes
-to the local filesystem, which the host wipes on every deploy**; the Import page
-says so in red if that is the situation.
+### Snapshot mode vs live mode
+
+Vercel's filesystem is read-only, so a deployment with no database cannot
+accept an upload at all. Rather than serve an empty dashboard, the app falls
+back to **`data/seed.json`** — the September export, baked in at build time by
+`scripts/build-seed.ts`. Everything on the dashboard is real; only importing is
+switched off, and both the home page and the import page say so.
+
+To turn the deployment into the real thing, set `DATABASE_URL` to a Neon
+Postgres connection string. Tables are created on first use, there is no
+migration step, and the import page becomes a working upload form. Regenerate
+the snapshot after a new export with:
+
+```bash
+npx tsx scripts/build-seed.ts ~/Downloads/SharkNinjaBrief/*.xlsx
+```
 
 ## Tests
 

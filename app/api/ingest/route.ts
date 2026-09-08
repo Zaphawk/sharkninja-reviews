@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { ingestBuffer } from "@/lib/ingest";
 import { skuForSheet } from "@/lib/skus";
+import { ReadOnlyStoreError } from "@/lib/store";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -66,6 +67,9 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ ok: true, reports });
   } catch (err) {
+    if (err instanceof ReadOnlyStoreError) {
+      return NextResponse.json({ error: err.message }, { status: 409 });
+    }
     const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });
   }

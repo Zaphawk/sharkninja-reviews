@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { UploadForm } from "@/components/UploadForm";
 import { loadReviews } from "@/lib/data";
-import { getStore, usingEphemeralStore } from "@/lib/store";
+import { getStore, snapshotGeneratedAt, usingSnapshot } from "@/lib/store";
 import { dateRange } from "@/lib/aggregate";
 import { Panel } from "@/components/Stat";
 
@@ -15,6 +15,7 @@ export default async function UploadPage() {
     store.listImports(),
   ]);
   const range = dateRange(reviews);
+  const snapshot = usingSnapshot();
 
   return (
     <div className="space-y-6">
@@ -26,15 +27,22 @@ export default async function UploadPage() {
         </p>
       </div>
 
-      {usingEphemeralStore() ? (
-        <div className="rounded-lg border border-[#e5b4b0] bg-[#fdefee] p-4 text-[13px] text-[#8f2019]">
-          <b>DATABASE_URL is not set.</b> Data is being written to the local
-          filesystem, which this host wipes on every deploy. Set DATABASE_URL to
-          a Postgres connection string before relying on anything imported here.
+      {snapshot ? (
+        <div className="rounded-lg border border-[#e8d5ab] bg-[#fdf9f0] p-4 text-[13px] text-[#6b4a10]">
+          <b>This deployment is showing a snapshot.</b> No database is connected,
+          so it is serving the export baked in on{" "}
+          {new Date(snapshotGeneratedAt).toLocaleDateString("en-GB", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          })}
+          {". Everything on the dashboard is real, but importing is switched off until a "}
+          <code>DATABASE_URL</code>
+          {" is set — a read-only host has nowhere to put new reviews."}
         </div>
-      ) : null}
-
-      <UploadForm />
+      ) : (
+        <UploadForm />
+      )}
 
       <Panel
         title="What is loaded"

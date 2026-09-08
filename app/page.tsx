@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { allBrandTotals, dateRange } from "@/lib/aggregate";
 import { loadReviews } from "@/lib/data";
+import { snapshotGeneratedAt, usingSnapshot } from "@/lib/store";
 import { SentimentBar, SentimentLegend, Stars } from "@/components/Stat";
 
 export const dynamic = "force-dynamic";
@@ -42,6 +43,18 @@ export default async function Home() {
           ) : null}
         </p>
       </div>
+
+      {usingSnapshot() ? (
+        <p className="mt-3 rounded-md border border-silver-light bg-white px-3 py-2 text-[12px] text-ink-60">
+          Snapshot of the export collected{" "}
+          {new Date(snapshotGeneratedAt).toLocaleDateString("en-GB", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          })}
+          {". Connect a database to import new months from the browser."}
+        </p>
+      ) : null}
 
       <div className="mt-6 grid gap-5 sm:grid-cols-2">
         {totals.map((t) => (
