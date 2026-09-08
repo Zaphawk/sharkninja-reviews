@@ -1,17 +1,66 @@
 @import "tailwindcss";
 
+/**
+ * SharkNinja India brand theme.
+ *
+ * Sourced from the live India storefront (sharkninja.in, which serves both
+ * ninjakitchen.in and sharkclean.in from one Shopify theme):
+ *
+ *   --accent-color        #d85827   the copper-orange
+ *   --accent-color-darken #973e1b
+ *   --link-color          #000000   links are black, hover goes orange
+ *   --pr-addtocart-color  #0ec1ae   the bright teal
+ *   --jdgm-primary-color  #108474   the deep teal
+ *   --heading-color       #000000
+ *
+ * That "links are black, hover orange" rule is the reason orange is free to
+ * carry meaning here. On a sentiment dashboard the strongest brand colour
+ * should mean something, so orange is negative sentiment throughout and
+ * interaction stays black — exactly the storefront's own hierarchy.
+ */
 @theme {
-  --color-teal: #00a5af;
-  --color-teal-dark: #007e86;
-  --color-teal-tint: #e6f6f7;
-  --color-silver: #bbbdc0;
-  --color-silver-light: #e8e9ea;
-  --color-silver-bg: #f6f7f7;
-  --color-ink: #000000;
-  --color-ink-60: #5a5c5e;
+  /* Brand */
+  --color-brand: #d85827;
+  --color-brand-dark: #973e1b;
+  --color-brand-tint: #fdf0e9;
+  --color-brand-line: #f2c9b5;
 
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
+  /* Teal — the other half of the SharkNinja palette */
+  --color-teal: #108474;
+  --color-teal-bright: #0ec1ae;
+  --color-teal-tint: #e7f6f3;
+  --color-teal-line: #a9dcd3;
+
+  /* Ink and surfaces */
+  --color-ink: #000000;
+  --color-ink-60: #5c5c5c;
+  --color-ink-40: #7b7b7b;
+  --color-line: #e4e4e4;
+  --color-line-soft: #f1f1f1;
+  --color-surface: #ffffff;
+  --color-canvas: #f7f7f7;
+
+  /* Sentiment — one mapping used by every chart on the site */
+  --color-positive: #108474;
+  --color-neutral: #c9c9c9;
+  --color-negative: #d85827;
+
+  /* Warning (low sample size) */
+  --color-warn: #8a5a00;
+  --color-warn-bg: #fdf6e8;
+  --color-warn-line: #e8d5ab;
+
+  /**
+   * Gotham is the storefront's typeface, but it is licensed from Hoefler&Co
+   * and cannot be self-hosted here. Montserrat is the closest freely licensed
+   * geometric sans and carries the Gotham feel on headings; Plus Jakarta Sans
+   * is SharkNinja's own corporate typeface (sharkninja.com) and has the
+   * tabular figures the tables need.
+   */
+  --font-display: var(--font-montserrat), "Montserrat", ui-sans-serif, system-ui,
+    sans-serif;
+  --font-sans: var(--font-jakarta), "Plus Jakarta Sans", ui-sans-serif,
+    system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
 :root {
@@ -19,13 +68,31 @@
 }
 
 body {
-  background: var(--color-silver-bg);
+  background: var(--color-canvas);
   color: var(--color-ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-/* Numbers in tables should line up. */
+/* Headings and the wordmark carry the Gotham-like face. */
+h1,
+h2,
+h3,
+.display {
+  font-family: var(--font-display);
+  letter-spacing: -0.015em;
+}
+
+/* Numbers in tables and stat blocks should line up column to column. */
 .tabular {
   font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* Consistent focus ring — keyboard users should never lose their place. */
+:where(a, button, select, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+  border-radius: 4px;
 }

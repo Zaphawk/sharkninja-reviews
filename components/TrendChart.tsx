@@ -1,60 +1,119 @@
 "use client";
 
 import {
+  Bar,
   CartesianGrid,
+  ComposedChart,
   Line,
-  LineChart,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
 import type { TrendPoint } from "@/lib/aggregate";
+import { Legend } from "./Stat";
 
+/**
+ * Monthly verified average, with the number of reviews behind each month drawn
+ * underneath it. The bars matter: a line dropping from 4.7 to 3.4 reads very
+ * differently when the later month is 43 reviews rather than three, and
+ * without them a reader cannot tell which they are looking at.
+ */
 export function TrendChart({ points }: { points: TrendPoint[] }) {
+  const overall =
+    points.reduce((a, p) => a + p.avg * p.n, 0) /
+    Math.max(1, points.reduce((a, p) => a + p.n, 0));
+  const maxN = Math.max(...points.map((p) => p.n));
+
   return (
-    <div className="h-64 w-full">
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={points} margin={{ top: 8, right: 12, bottom: 4, left: -18 }}>
-          <CartesianGrid stroke="#e8e9ea" vertical={false} />
-          <XAxis
-            dataKey="label"
-            tick={{ fontSize: 12, fill: "#5a5c5e" }}
-            tickLine={false}
-            axisLine={{ stroke: "#e8e9ea" }}
-          />
-          <YAxis
-            domain={[1, 5]}
-            ticks={[1, 2, 3, 4, 5]}
-            tick={{ fontSize: 12, fill: "#5a5c5e" }}
-            tickLine={false}
-            axisLine={false}
-          />
-          <Tooltip
-            contentStyle={{
-              border: "1px solid #e8e9ea",
-              borderRadius: 6,
-              fontSize: 12,
-            }}
-            formatter={(value, _name, item) => {
-              const point = item?.payload as TrendPoint | undefined;
-              const avg = typeof value === "number" ? value.toFixed(2) : String(value);
-              return [
-                `${avg} / 5 · ${point?.n ?? 0} reviews`,
-                "Verified average",
-              ] as [string, string];
-            }}
-          />
-          <Line
-            type="monotone"
-            dataKey="avg"
-            stroke="#00a5af"
-            strokeWidth={2}
-            dot={{ r: 3, fill: "#00a5af" }}
-            activeDot={{ r: 5 }}
-          />
-        </LineChart>
-      </ResponsiveContainer>
+    <div>
+      <div className="h-72 w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <ComposedChart
+            data={points}
+            margin={{ top: 8, right: 8, bottom: 4, left: -20 }}
+          >
+            <CartesianGrid stroke="#f1f1f1" vertical={false} />
+            <XAxis
+              dataKey="label"
+              tick={{ fontSize: 12, fill: "#7b7b7b" }}
+              tickLine={false}
+              axisLine={{ stroke: "#e4e4e4" }}
+            />
+            <YAxis
+              yAxisId="rating"
+              domain={[1, 5]}
+              ticks={[1, 2, 3, 4, 5]}
+              tick={{ fontSize: 12, fill: "#7b7b7b" }}
+              tickLine={false}
+              axisLine={false}
+            />
+            {/* Review volume, scaled to sit in the bottom third and stay out
+                of the line's way. It is context, not a competing series. */}
+            <YAxis
+              yAxisId="count"
+              domain={[0, maxN * 3]}
+              hide
+            />
+            <Tooltip
+              cursor={{ fill: "#f7f7f7" }}
+              contentStyle={{
+                border: "1px solid #e4e4e4",
+                borderRadius: 8,
+                fontSize: 12,
+                fontFamily: "var(--font-jakarta), sans-serif",
+              }}
+              formatter={(value, name) => {
+                if (name === "Verified reviews that month") {
+                  return [`${value}`, name] as [string, string];
+                }
+                const avg =
+                  typeof value === "number" ? value.toFixed(2) : String(value);
+                return [`${avg} out of 5`, "Verified average"] as [string, string];
+              }}
+            />
+            <ReferenceLine
+              yAxisId="rating"
+              y={overall}
+              stroke="#7b7b7b"
+              strokeDasharray="4 4"
+            />
+            <Bar
+              yAxisId="count"
+              dataKey="n"
+              name="Verified reviews that month"
+              fill="#e4e4e4"
+              radius={[2, 2, 0, 0]}
+              maxBarSize={28}
+            />
+            <Line
+              yAxisId="rating"
+              type="monotone"
+              dataKey="avg"
+              name="Verified average"
+              stroke="#d85827"
+              strokeWidth={2.5}
+              dot={{ r: 3.5, fill: "#d85827", strokeWidth: 0 }}
+              activeDot={{ r: 6 }}
+            />
+          </ComposedChart>
+        </ResponsiveContainer>
+      </div>
+
+      <Legend
+        className="mt-3 border-t border-line pt-3"
+        items={[
+          { colour: "#d85827", label: "Verified average that month (left scale, 1–5)" },
+          { colour: "#e4e4e4", label: "How many verified reviews that month" },
+          {
+            colour: "#7b7b7b",
+            label: "Average across the whole period",
+            value: overall.toFixed(2),
+          },
+        ]}
+        note="Verified purchases only, so a month of unverified reviews cannot move the line. Hover any month for its exact figures."
+      />
     </div>
   );
 }

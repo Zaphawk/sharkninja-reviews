@@ -1,0 +1,238 @@
+{
+  "generatedAt": "2026-09-08T11:15:00.000Z",
+  "model": "openrouter/anthropic/claude-3.5-sonnet",
+  "insights": [
+    {
+      "skuId": "ninja-blast",
+      "tone": "healthy",
+      "headline": "High consumer satisfaction driven by daily blending convenience and portability, with isolated motor fatigue reports.",
+      "body": [
+        "The Ninja Blast is currently Ninja India's highest-volume listing with 85 verified reviews and a 4.44 verified average. Buyers consistently cite ease of use, compact form factor, and dependable battery endurance for single-serve smoothies.",
+        "Negative feedback represents only 8% of all reviews, primarily concentrated in hardware complaints where blades become lodged on dense frozen ingredients or charging fails after several months of use. Marketplace and packaging complaints remain negligible."
+      ],
+      "soWhat": "A reliable gateway appliance that builds trust in Ninja's motor engineering. Low warranty and return friction protect gross margin.",
+      "watch": "Track long-term battery retention complaints and blade replacement accessory requests on Amazon.",
+      "evidence": [
+        "85 verified reviews with a 4.44 verified star rating",
+        "82% positive reviews and only 8% negative reviews",
+        "6 out of 8 negative reviews cite product hardware issues"
+      ],
+      "dataHash": "c37718b0f113bfe1",
+      "generatedAt": "2026-09-08T11:15:00.000Z",
+      "model": "openrouter/anthropic/claude-3.5-sonnet"
+    },
+    {
+      "skuId": "ninja-combi",
+      "tone": "healthy",
+      "headline": "Flagship multi-cooker performance with exceptional retention and praise for rapid, multi-element meal preparation.",
+      "body": [
+        "The Ninja Combi holds a 4.62 verified rating across 42 verified purchases, representing the highest customer satisfaction among high-ticket kitchen appliances. Reviewers praise its ability to steam and air fry simultaneously, significantly reducing weekday cooking times.",
+        "Complaints are minimal at 8% total, centered almost exclusively on the substantial countertop footprint and initial learning curve for mode transitions. No recurring component failure pattern is observed."
+      ],
+      "soWhat": "Acts as an effective halo product justifying premium positioning above standard domestic air fryers.",
+      "watch": "Monitor recipe and localization inquiries; Indian vegetarian multi-tier cooking recipes will accelerate referral sales.",
+      "evidence": [
+        "4.62 verified average across 42 verified purchases",
+        "88% positive sentiment across all 49 customer reviews",
+        "Only 4 negative reviews recorded in the entire dataset"
+      ],
+      "dataHash": "68f4418eee6e1753",
+      "generatedAt": "2026-09-08T11:15:00.000Z",
+      "model": "openrouter/anthropic/claude-3.5-sonnet"
+    },
+    {
+      "skuId": "ninja-air-fryer-6-2l",
+      "tone": "healthy",
+      "headline": "Solid core revenue driver with high capacity ratings, though price-to-feature comparisons against local brands persist.",
+      "body": [
+        "Generating 56 verified reviews with a 4.48 verified average, the 6.2L Air Fryer satisfies Indian family meal portion demands. The non-stick crisper plate and even convection circulation receive repeated praise in verified purchase reviews.",
+        "Negative reviews (11%) largely dispute price premium versus Philips and domestic alternatives, alongside brief mentions of initial heating element smell during first-time burn-in.",
+        "Rating trend remains stable between 4.3 and 4.6 over consecutive quarters."
+      ],
+      "soWhat": "Key volume defender against incumbent kitchen brands. Consistent ratings preserve Buy Box dominance.",
+      "watch": "Price promotion elasticity against competing 6L domestic models on festival sales.",
+      "evidence": [
+        "4.48 verified rating with 56 verified reviews",
+        "84% positive review share",
+        "5 of 8 negative reviews address product expectations or pricing"
+      ],
+      "dataHash": "ae339a49056d6083",
+      "generatedAt": "2026-09-08T11:15:00.000Z",
+      "model": "openrouter/anthropic/claude-3.5-sonnet"
+    },
+    {
+      "skuId": "ninja-dual-zone",
+      "tone": "watch",
+      "headline": "Promising dual-basket concept vulnerable to courier handling and transit paint abrasions on small sample size.",
+      "body": [
+        "With only 4 verified reviews (avg 4.00), the Dual Zone air fryer does not yet clear the 10-review statistical confidence threshold. Positive reviews appreciate synchronised cooking zones for family dinners.",
+        "One third of reviews are negative, with specific callouts of chipped exterior paint upon unboxing and delivery packaging failures. The underlying dual-motor heating system receives no mechanical complaints."
+      ],
+      "soWhat": "Cosmetic transit damage on a premium appliance damages brand perception before the customer plugs the unit in.",
+      "watch": "Transit packaging reinforcement and warehouse handling protocols for the dual-basket chassis.",
+      "evidence": [
+        "Only 4 verified reviews, placing the SKU in insufficient data status",
+        "33% negative rating share",
+        "100% of negative reviews flag marketplace or delivery transit issues"
+      ],
+      "dataHash": "5d4c298d2a04726e",
+      "generatedAt": "2026-09-08T11:15:00.000Z",
+      "model": "openrouter/anthropic/claude-3.5-sonnet"
+    },
+    {
+      "skuId": "ninja-double-stack",
+      "tone": "watch",
+      "headline": "Listing undermined by clustered unverified 1-star reviews while verified purchase experience remains pristine.",
+      "body": [
+        "The Double Stack listing displays an apparent 75% negative review rate on Amazon.in, but closer analysis reveals that 3 of the 4 reviews are unverified 1-star submissions posted on the exact same date (2026-04-01).",
+        "The single verified buyer awards 5 stars. The unverified reviews use generic copy alleging poor cooking and hard cleaning without purchase verification, indicating coordinated review suppression or competitor action."
+      ],
+      "soWhat": "An unverified review cluster drags the displayed Amazon rating down to 2.0 stars, destroying organic conversion.",
+      "watch": "Submit an Amazon Brand Registry abuse report to purge the unverified 2026-04-01 review cluster.",
+      "evidence": [
+        "Only 1 verified purchase review, which gave 5 stars",
+        "3 unverified 1-star reviews posted on a single day (2026-04-01)",
+        "Overall listing average collapsed to 2.00 due to unverified reviews"
+      ],
+      "dataHash": "86afdf0ab82ef049",
+      "generatedAt": "2026-09-08T11:15:00.000Z",
+      "model": "openrouter/anthropic/claude-3.5-sonnet"
+    },
+    {
+      "skuId": "shark-flex-breeze",
+      "tone": "critical",
+      "headline": "Severe rating collapse driven by unmet 70-foot airflow expectations, rapid battery drain, and absent demo support.",
+      "body": [
+        "The Shark Flex Breeze is experiencing a precipitous sentiment breakdown: verified ratings dropped from 3.82 in April to 2.55 in May, 2.00 in June, and 1.00 in August. Half of all buyers (49%) rate it 1 or 2 stars.",
+        "The core breakdown stems from aggressive marketing claims: reviewers repeatedly highlight that the airflow does not project beyond 8 to 10 feet, contradicting the advertised 70-foot throw. In outdoor and cordless modes, buyers report battery shutdown within 5 to 15 minutes.",
+        "Compounding the product defects, 18% of negative reviews complain of non-existent service centers and unavailable product demos despite marketing claims of 330 nationwide centers."
+      ],
+      "soWhat": "High return rates, severe brand damage in premium climate care, and high risk of Amazon customer sentiment penalties.",
+      "watch": "Revise Amazon listing copy immediately to align air throw expectations; audit battery quality and customer support routing.",
+      "evidence": [
+        "Verified monthly rating crashed from 3.82 (Apr) to 1.00 (Aug)",
+        "49% of all reviews are 1 or 2 stars (17 negative reviews)",
+        "71% of negatives cite product capability and 65% cite listing expectation mismatches",
+        "Top complaint theme: 'air flow' (4 reviews) and 'battery backup' (2 reviews)"
+      ],
+      "dataHash": "a955bd5ee72d7db3",
+      "generatedAt": "2026-09-08T11:15:00.000Z",
+      "model": "openrouter/anthropic/claude-3.5-sonnet"
+    },
+    {
+      "skuId": "shark-air-purifier",
+      "tone": "warning",
+      "headline": "Sensor calibration defects and perceived room coverage exaggeration restrict sentiment in winter smog season.",
+      "body": [
+        "The Shark Air Purifier holds a 3.82 verified rating across 34 verified reviews, but 36% of all submissions are negative. Praise centers on clean industrial aesthetics, HEPA 14 filtration, and real-time particle displays.",
+        "Negative sentiment stems from two distinct defects: sensor failures locking the display at 0% or failing after 2 to 3 months, and square footage disputes where customers find the unit unable to reduce AQI in rooms larger than 300 sq ft despite 1400 sq ft claims.",
+        "High replacement filter costs and noise on turbo mode also generate recurring customer friction."
+      ],
+      "soWhat": "In a competitive Indian air purifier market dominated by Coway, Philips, and Dyson, sensor failures cripple repurchase and recommendation rates.",
+      "watch": "Sensor RMA replacement batch tracking and filter pricing strategy ahead of North India's winter peak.",
+      "evidence": [
+        "36% negative sentiment share across 47 reviews",
+        "94% of negative reviews point to sensor or room purification performance",
+        "Repeating complaint phrases: 'poor quality' (3), 'closed room' (2), 'small room' (2)"
+      ],
+      "dataHash": "f5ba3781ff0a3d99",
+      "generatedAt": "2026-09-08T11:15:00.000Z",
+      "model": "openrouter/anthropic/claude-3.5-sonnet"
+    },
+    {
+      "skuId": "shark-steam-and-scrub",
+      "tone": "watch",
+      "headline": "Effective steam sanitation encountering friction on Indian marble and polished stone flooring.",
+      "body": [
+        "The Steam & Scrub mop carries an overall 3.78 verified rating across 18 reviews, with 67% positive sentiment. Users looking for chemical-free steam sanitization praise the rotating scrubbing pads and high steam temperature.",
+        "Recent monthly ratings have declined from 4.75 in June to 3.17 in July and 1.00 in August. Complaints focus on water streak marks left on polished marble and granite floors, alongside complaints that loose debris must still be swept beforehand."
+      ],
+      "soWhat": "Marble is the standard premium flooring in Indian homes; if the mop leaves visible water stains, high-income target customers will reject it.",
+      "watch": "Buyer guidance and video assets demonstrating pad dryness and pre-sweep requirements on polished stone.",
+      "evidence": [
+        "Verified monthly rating declined from 4.75 (Jun) to 3.17 (Jul) and 1.00 (Aug)",
+        "22% negative review rate across 18 purchases",
+        "Customer reviews explicitly cite water marks on marble floors"
+      ],
+      "dataHash": "7b1537958007fe0a",
+      "generatedAt": "2026-09-08T11:15:00.000Z",
+      "model": "openrouter/anthropic/claude-3.5-sonnet"
+    },
+    {
+      "skuId": "shark-detect-clean-and-empty",
+      "tone": "watch",
+      "headline": "Early praise for auto-empty dock offset by a single report of thermal shutdown under continuous operation.",
+      "body": [
+        "With only 3 verified reviews (avg 4.00), data remains insufficient for statistical confidence. Reviewers appreciate the automated emptying base and lightweight wand design.",
+        "One review flags motor overheating and thermal shutdown after 5 minutes of high-speed vacuuming. While sample size is small, thermal protection cutoffs in tropical climates warrant monitoring."
+      ],
+      "soWhat": "Auto-empty vacuums are Shark's flagship defense against Dyson; thermal reliability is critical to justify the premium price tag.",
+      "watch": "Track warranty claims and motor overheating mentions as unit sales scale.",
+      "evidence": [
+        "3 verified reviews with a 4.00 average",
+        "1 review citing motor shutdown after 5 minutes of usage",
+        "Insufficient data status (< 10 verified reviews)"
+      ],
+      "dataHash": "35159aa95fd20dba",
+      "generatedAt": "2026-09-08T11:15:00.000Z",
+      "model": "openrouter/anthropic/claude-3.5-sonnet"
+    },
+    {
+      "skuId": "shark-power-pro-pet",
+      "tone": "warning",
+      "headline": "Replacement inventory stockouts and battery heating complaints generate acute post-purchase dissatisfaction.",
+      "body": [
+        "With 3 verified reviews and a 3.00 average, this SKU shows high friction early in its lifecycle. Two of three reviews are 2-star ratings.",
+        "The negative reviews report battery pack overheating during charging and acute fulfillment friction: customers receiving damaged items were informed that replacement stock was unavailable despite active retail sales stock."
+      ],
+      "soWhat": "Blocking customer returns or replacements due to segregated Amazon inventory pools triggers immediate negative reviews and chargebacks.",
+      "watch": "Align Amazon return inventory reserves with active retail stock; inspect battery thermal charging curve.",
+      "evidence": [
+        "2 out of 3 reviews are negative (67% negative rate)",
+        "Specific review noting replacement stock refusal despite active listing",
+        "Reported battery heating preventing subsequent recharge cycles"
+      ],
+      "dataHash": "371bd7842ac2a334",
+      "generatedAt": "2026-09-08T11:15:00.000Z",
+      "model": "openrouter/anthropic/claude-3.5-sonnet"
+    },
+    {
+      "skuId": "shark-hydrovac",
+      "tone": "unknown",
+      "headline": "Review data is too limited to establish product reliability or consumer sentiment patterns.",
+      "body": [
+        "Only 1 verified review exists on Amazon.in (a 4-star rating praising wet and dry pickup).",
+        "No negative reviews or meaningful recurring themes have been recorded. No commercial conclusions should be drawn until review volume exceeds 10 verified purchases."
+      ],
+      "soWhat": "Current listing lacks social proof, depressing click-through and purchase conversion on Amazon.in.",
+      "watch": "Accelerate Amazon Vine seeding or post-purchase review generation campaigns.",
+      "evidence": [
+        "1 total review in the dataset",
+        "0 negative reviews recorded",
+        "Insufficient data threshold (< 10 verified reviews)"
+      ],
+      "dataHash": "55c751d3f2e0bc26",
+      "generatedAt": "2026-09-08T11:15:00.000Z",
+      "model": "openrouter/anthropic/claude-3.5-sonnet"
+    },
+    {
+      "skuId": "shark-powerdetect",
+      "tone": "watch",
+      "headline": "Positive cordless suction sentiment contrasted by customer expectations of technician installation support.",
+      "body": [
+        "The PowerDetect vacuum holds a 3.67 verified average across 3 reviews. Positive buyers highlight strong floor detection sensors and edge cleaning suction.",
+        "The single negative review complains of zero installation and demo support from Shark. In India, appliances above 20,000 INR often carry consumer expectations of home demo visits, even for cordless stick vacuums."
+      ],
+      "soWhat": "Unmanaged demo expectations lead to frustrated 1-star reviews on otherwise functional hardware.",
+      "watch": "Include quick-start video QR codes and clarify on the Amazon listing that stick vacuums are self-installable.",
+      "evidence": [
+        "3 verified reviews with 3.67 average",
+        "1 negative review specifically citing lack of installation service",
+        "Insufficient data threshold (< 10 verified reviews)"
+      ],
+      "dataHash": "5f281ed0a4fbb3c1",
+      "generatedAt": "2026-09-08T11:15:00.000Z",
+      "model": "openrouter/anthropic/claude-3.5-sonnet"
+    }
+  ]
+}

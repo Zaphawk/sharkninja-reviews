@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import cloud from "d3-cloud";
 import type { CloudWord } from "@/lib/text";
+import { Legend } from "./Stat";
 
 type Placed = CloudWord & {
   x: number;
@@ -57,7 +58,7 @@ export function WordCloudView({
       .words(scaled.map((w) => ({ ...w, x: 0, y: 0, rotate: 0 })) as Placed[])
       .padding(3)
       .rotate(0)
-      .font("ui-sans-serif, system-ui, sans-serif")
+      .font("var(--font-jakarta), Plus Jakarta Sans, sans-serif")
       .fontSize((d) => (d as Placed).size)
       .on("end", (out) => {
         if (!cancelled) setPlaced(out as Placed[]);
@@ -72,23 +73,29 @@ export function WordCloudView({
   const colour = (v: number, max: number) => {
     const t = v / max;
     if (tone === "positive") {
-      return t > 0.6 ? "#00a5af" : t > 0.3 ? "#4bbcc3" : "#8fd4d8";
+      return t > 0.6 ? "#108474" : t > 0.3 ? "#3ea394" : "#86c6bb";
     }
-    return t > 0.6 ? "#c8322b" : t > 0.3 ? "#d4655f" : "#e09b97";
+    return t > 0.6 ? "#d85827" : t > 0.3 ? "#e08159" : "#eeb69c";
   };
   const max = Math.max(1, ...words.map((w) => w.value));
+
+  const top = words.slice().sort((a, b) => b.value - a.value)[0];
+  const ramp =
+    tone === "positive"
+      ? ["#86c6bb", "#3ea394", "#108474"]
+      : ["#eeb69c", "#e08159", "#d85827"];
 
   return (
     <div ref={ref} className="w-full">
       {words.length === 0 ? (
         <div
           style={{ height }}
-          className="flex items-center justify-center rounded-md border border-dashed border-silver text-[13px] text-ink-60"
+          className="flex items-center justify-center rounded-lg border border-dashed border-line text-[13px] text-ink-40"
         >
           No word or phrase came up often enough to plot.
         </div>
       ) : placed === null ? (
-        <div style={{ height }} className="animate-pulse rounded-md bg-silver-bg" />
+        <div style={{ height }} className="animate-pulse rounded-lg bg-canvas" />
       ) : (
         <svg width={width} height={height} role="img" aria-label={`${tone} word cloud`}>
           <g transform={`translate(${width / 2},${height / 2})`}>
@@ -101,7 +108,7 @@ export function WordCloudView({
                   fontSize: w.size,
                   fontWeight: w.value > max * 0.5 ? 700 : 500,
                   fill: colour(w.value, max),
-                  fontFamily: "ui-sans-serif, system-ui, sans-serif",
+                  fontFamily: "var(--font-jakarta), Plus Jakarta Sans, sans-serif",
                 }}
               >
                 {w.text}
@@ -110,6 +117,23 @@ export function WordCloudView({
           </g>
         </svg>
       )}
+
+      {words.length > 0 ? (
+        <Legend
+          className="mt-3 border-t border-line pt-3"
+          items={[
+            { colour: null, label: "Bigger word = more reviews used it" },
+            { colour: ramp[0], label: "Used less often" },
+            { colour: ramp[1], label: "Used more" },
+            { colour: ramp[2], label: "Used most" },
+          ]}
+          note={
+            top
+              ? `Most repeated here: "${top.text}", in ${top.value} of these reviews. Product names and the category itself are filtered out, so "air fryer" cannot crowd out what people actually said about it.`
+              : undefined
+          }
+        />
+      ) : null}
     </div>
   );
 }

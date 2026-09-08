@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "tsx --test tests/*.test.ts",
+    "insights:generate": "tsx scripts/generate-insights.ts",
     "build:webpack": "next build --webpack"
   },
   "dependencies": {

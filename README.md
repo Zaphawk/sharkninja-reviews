@@ -31,8 +31,10 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 |---|---|---|
 | `APP_PASSWORD` | yes | The shared team password on the sign-in page |
 | `AUTH_SECRET` | yes | Signs the session cookie. Any long random string |
-| `DATABASE_URL` | in production | Postgres (Neon). Without it, data goes to `.data/store.json` — fine locally, wiped on every deploy |
+| `DATABASE_URL` | in production | Postgres (Neon). Without it, data goes to `.data/store.json` (fine locally, wiped on every deploy) |
 | `INGEST_TOKEN` | no | Shared secret a future scraper sends as `x-ingest-token` to `POST /api/ingest` |
+| `OPENROUTER_API_KEY` | for AI generation | Key used by `npm run insights:generate` to synthesize executive insights |
+| `OPENROUTER_MODEL` | no | OpenRouter model override (defaults to `anthropic/claude-3.5-sonnet`) |
 
 ## Refreshing the data
 
@@ -121,6 +123,23 @@ npx tsx scripts/classify-coverage.ts ~/Downloads/SharkNinjaBrief/*.xlsx
 `{ title, body, rating } -> Bucket[]`. Replacing keywords with an LLM call
 means writing one new function behind that signature; ingest, storage and the
 dashboard do not change.
+
+## Executive AI Insights (OpenRouter)
+
+Beyond counts and keyword buckets, each SKU features an executive insight card summarizing consumer sentiment, root cause diagnosis, commercial impact ("so what"), and operational watch points.
+
+Insights are baked into **`data/insights.json`** and validated against review fingerprint hashes (`dataHash`). If new reviews shift the data, the card flags that the analysis reflects earlier data rather than silently showing a stale reading.
+
+To regenerate insights using OpenRouter:
+
+```bash
+OPENROUTER_API_KEY=your_key npm run insights:generate
+```
+
+Options:
+- `--sku <id>`: Regenerate a single SKU only
+- `--force`: Regenerate even if `dataHash` is unchanged
+- `OPENROUTER_MODEL=...`: Specify model (defaults to `anthropic/claude-3.5-sonnet`)
 
 ## Deploying
 

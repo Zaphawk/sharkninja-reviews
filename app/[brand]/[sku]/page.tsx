@@ -11,7 +11,8 @@ import {
 } from "@/lib/aggregate";
 import { loadReviews } from "@/lib/data";
 import { amazonUrl, BRANDS, skuById } from "@/lib/skus";
-import { BucketBars, ThemeList } from "@/components/Insights";
+import { getSkuInsight } from "@/lib/insights";
+import { BucketBars, InsightCard, ThemeList } from "@/components/Insights";
 import {
   InsufficientBadge,
   NotEnough,
@@ -42,6 +43,7 @@ export default async function SkuPage({
   const negativeThemes = themesFor(reviews, "negative", sku, 5);
   const buckets = bucketTable(reviews);
   const trendResult = trend(reviews);
+  const { insight, isStale } = getSkuInsight(sku.id, reviews);
 
   return (
     <div className="space-y-6">
@@ -84,6 +86,8 @@ export default async function SkuPage({
       ) : null}
 
       <RatingComparison verified={stats.verified} all={stats.all} />
+
+      {insight ? <InsightCard insight={insight} isStale={isStale} /> : null}
 
       <div className="grid gap-5 lg:grid-cols-2">
         <Panel
