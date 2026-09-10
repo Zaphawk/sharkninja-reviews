@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { IngestReport } from "@/lib/types";
+import type { IngestReport, SkippedRow } from "@/lib/types";
 import { warningLabel } from "@/lib/validate";
 
 type State =
@@ -18,11 +18,12 @@ export function UploadForm() {
   const router = useRouter();
 
   async function send(files: FileList | File[]) {
-    const list = [...files].filter((f) => /\.(xlsx|xls|csv)$/i.test(f.name));
+    const list = [...files].filter((f) => /\.(xlsx|xlsm|xls|csv)$/i.test(f.name));
     if (list.length === 0) {
       setState({
         status: "error",
-        message: "Those don't look like review exports. Send .xlsx, .xls or .csv.",
+        message:
+          "Those are not spreadsheets. Send .xlsx, .xls or .csv - the template above is either.",
       });
       return;
     }
@@ -100,8 +101,8 @@ export function UploadForm() {
 
       {state.status === "done" ? (
         <div className="mt-5 space-y-4">
-          {state.reports.map((r) => (
-            <ReportCard key={r.filename} report={r} />
+          {state.reports.map((r, i) => (
+            <ReportCard key={`${r.filename}-${i}`} report={r} />
           ))}
         </div>
       ) : null}
@@ -156,8 +157,12 @@ function ReportCard({ report }: { report: IngestReport }) {
         </div>
       ) : null}
 
+      {report.skippedRows.length > 0 ? (
+        <SkippedRows rows={report.skippedRows} />
+      ) : null}
+
       {report.perSku.length > 0 ? (
-        <table className="mt-3 w-full text-[13px]">
+        <table className="mt-4 w-full text-[13px]">
           <tbody>
             {report.perSku.map((s) => (
               <tr key={s.skuId} className="border-t border-silver-light/70">
@@ -173,6 +178,41 @@ function ReportCard({ report }: { report: IngestReport }) {
           </tbody>
         </table>
       ) : null}
+    </div>
+  );
+}
+
+/**
+ * Rows the parser could not read. Listed with their spreadsheet row number so
+ * the file can be opened and fixed, rather than left to be noticed as a total
+ * that came out lower than expected.
+ */
+function SkippedRows({ rows }: { rows: SkippedRow[] }) {
+  const shown = rows.slice(0, 12);
+  return (
+    <div className="mt-4 rounded-md border border-[#e5b4b0] bg-[#fdefee] p-3">
+      <p className="text-[12px] font-bold uppercase tracking-wide text-[#8f2019]">
+        {rows.length} row{rows.length === 1 ? "" : "s"} not imported
+      </p>
+      <ul className="mt-1.5 space-y-1 text-[12px] text-[#8f2019]">
+        {shown.map((r) => (
+          <li key={`${r.sheetName}-${r.row}`}>
+            <b className="font-semibold">
+              {r.sheetName} row {r.row}
+            </b>{" "}
+            - {r.detail}
+          </li>
+        ))}
+      </ul>
+      {rows.length > shown.length ? (
+        <p className="mt-1.5 text-[11px] text-[#8f2019]">
+          and {rows.length - shown.length} more.
+        </p>
+      ) : null}
+      <p className="mt-2 text-[11px] text-[#8f2019]">
+        Everything else in the file was imported. Fix these rows and import
+        again - what is already in will not be counted twice.
+      </p>
     </div>
   );
 }

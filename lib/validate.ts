@@ -1,4 +1,4 @@
-import type { ParsedReview, Warning } from "./types";
+import type { ParsedReview, SkippedRow, Warning } from "./types";
 import { skuById } from "./skus";
 
 /** Data-entry noise seen in real exports. */
@@ -22,6 +22,7 @@ function looksLikeProse(name: string): boolean {
 export function validate(
   reviews: ParsedReview[],
   duplicateHashes: number,
+  skippedRows: SkippedRow[] = [],
 ): Warning[] {
   const warnings: Warning[] = [];
   const today = new Date().toISOString().slice(0, 10);
@@ -58,7 +59,35 @@ export function validate(
     });
   }
 
+  for (const [reason, rows] of groupByReason(skippedRows)) {
+    warnings.push({
+      kind: "skipped-rows",
+      skuId: "",
+      detail: `${rows.length} row${rows.length === 1 ? "" : "s"} could not be read (${SKIP_LABEL[reason]}): ${rows
+        .slice(0, 4)
+        .map((r) => `${r.sheetName} row ${r.row}`)
+        .join(", ")}${rows.length > 4 ? `, and ${rows.length - 4} more` : ""}. ${rows[0].detail}`,
+    });
+  }
+
   return warnings;
+}
+
+const SKIP_LABEL: Record<SkippedRow["reason"], string> = {
+  "unknown-product": "the product did not match a SKU",
+  "bad-rating": "no usable rating",
+  "bad-date": "no usable date",
+  "empty-review": "nothing written in it",
+};
+
+function groupByReason(rows: SkippedRow[]): [SkippedRow["reason"], SkippedRow[]][] {
+  const byReason = new Map<SkippedRow["reason"], SkippedRow[]>();
+  for (const r of rows) {
+    const list = byReason.get(r.reason);
+    if (list) list.push(r);
+    else byReason.set(r.reason, [r]);
+  }
+  return [...byReason.entries()];
 }
 
 export function warningLabel(w: Warning): string {

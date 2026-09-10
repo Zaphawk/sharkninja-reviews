@@ -26,6 +26,18 @@ export type ParsedReview = {
   variant: string | null;
 };
 
+/**
+ * A row of a headed table that could not become a review. Reported rather than
+ * dropped: an import that is quietly short is the failure nobody catches.
+ */
+export type SkippedRow = {
+  sheetName: string;
+  /** 1-based spreadsheet row, so it can be opened and looked at. */
+  row: number;
+  reason: "unknown-product" | "bad-rating" | "bad-date" | "empty-review";
+  detail: string;
+};
+
 /** A stored review: parsed, hashed, classified. */
 export type Review = ParsedReview & {
   hash: string;
@@ -40,6 +52,7 @@ export type IngestReport = {
   inserted: number;
   duplicates: number;
   unmappedSheets: string[];
+  skippedRows: SkippedRow[];
   perSku: { skuId: string; name: string; parsed: number; inserted: number }[];
   dateRange: { from: string; to: string } | null;
   warnings: Warning[];
@@ -51,7 +64,12 @@ export type IngestReport = {
  * rows to go and look at.
  */
 export type Warning = {
-  kind: "suspicious-reviewer" | "duplicate-in-file" | "empty-review" | "future-date";
+  kind:
+    | "suspicious-reviewer"
+    | "duplicate-in-file"
+    | "empty-review"
+    | "future-date"
+    | "skipped-rows";
   skuId: string;
   detail: string;
 };

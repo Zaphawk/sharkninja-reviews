@@ -16,18 +16,40 @@ export function toReviews(parsed: ParsedReview[]): Review[] {
 }
 
 /**
+ * A tab that matches no SKU means those reviews vanish. Raised before anything
+ * is written, so the message the caller shows ("nothing was imported") is true:
+ * the previous version inserted the good sheets first and then reported the
+ * import as refused.
+ */
+export class UnmappedSheetsError extends Error {
+  constructor(
+    readonly sheets: string[],
+    readonly filename: string,
+  ) {
+    super(
+      `Unrecognised sheet${sheets.length > 1 ? "s" : ""} in ${filename}: ${sheets.join(", ")}. Nothing was imported. Either use the model template, or add the tab name to that SKU's sheetNames in lib/skus.ts.`,
+    );
+    this.name = "UnmappedSheetsError";
+  }
+}
+
+/**
  * One path in, whether the bytes came from someone dragging a file onto the
- * upload page or from a scheduled scraper POSTing a workbook. Parse, hash,
- * classify, insert, report.
+ * upload page or from a scheduled scraper POSTing a workbook. Parse, check,
+ * hash, classify, insert, report.
  */
 export async function ingestBuffer(
   buf: Buffer,
   filename: string,
 ): Promise<IngestReport> {
-  const store = getStore();
-  await store.init();
-
   const parsedWb = parseWorkbook(buf);
+
+  // Checked before the store is touched: a refused import must leave nothing
+  // behind.
+  if (parsedWb.unmappedSheets.length > 0) {
+    throw new UnmappedSheetsError(parsedWb.unmappedSheets, filename);
+  }
+
   const reviews = toReviews(parsedWb.reviews);
 
   // Collapse duplicates inside a single file before touching the store: the
@@ -37,24 +59,17 @@ export async function ingestBuffer(
   const deduped = [...unique.values()];
   const withinFileDuplicates = reviews.length - deduped.length;
 
+  const store = getStore();
+  await store.init();
+
+  // Read what is already there first, so the per-SKU column can say how many
+  // are genuinely new rather than how many were unique within the file.
+  const existing = new Set((await store.allReviews()).map((r) => r.hash));
+
   const importId = randomUUID();
   const { inserted, duplicates } = await store.insertReviews(deduped, importId);
 
-  const perSku = parsedWb.sheets
-    .filter((s) => s.reviews.length > 0)
-    .map((s) => {
-      const skuId = s.reviews[0].skuId;
-      const hashes = new Set(
-        s.reviews.map((r) => reviewHash(r)),
-      );
-      return {
-        skuId,
-        name: skuById(skuId)?.name ?? skuId,
-        parsed: s.reviews.length,
-        inserted: deduped.filter((d) => hashes.has(d.hash)).length,
-      };
-    });
-
+  const perSku = perSkuRows(parsedWb.reviews, deduped, existing);
   const dates = deduped.map((r) => r.reviewDate).sort();
 
   const report: IngestReport = {
@@ -65,10 +80,11 @@ export async function ingestBuffer(
     inserted,
     duplicates: duplicates + withinFileDuplicates,
     unmappedSheets: parsedWb.unmappedSheets,
+    skippedRows: parsedWb.skippedRows,
     perSku,
     dateRange:
       dates.length > 0 ? { from: dates[0], to: dates[dates.length - 1] } : null,
-    warnings: validate(deduped, withinFileDuplicates),
+    warnings: validate(deduped, withinFileDuplicates, parsedWb.skippedRows),
   };
 
   await store.recordImport({
@@ -79,4 +95,33 @@ export async function ingestBuffer(
   });
 
   return report;
+}
+
+/**
+ * Grouped by SKU rather than by sheet. The template puts every SKU in one
+ * sheet, so reading the SKU off the first row of each sheet — which is what
+ * this used to do — collapsed twelve products into one.
+ */
+function perSkuRows(
+  parsed: ParsedReview[],
+  deduped: Review[],
+  existing: Set<string>,
+): IngestReport["perSku"] {
+  const rows = new Map<string, { parsed: number; inserted: number }>();
+  const row = (id: string) => {
+    let r = rows.get(id);
+    if (!r) rows.set(id, (r = { parsed: 0, inserted: 0 }));
+    return r;
+  };
+
+  for (const r of parsed) row(r.skuId).parsed++;
+  for (const r of deduped) if (!existing.has(r.hash)) row(r.skuId).inserted++;
+
+  return [...rows.entries()]
+    .map(([skuId, counts]) => ({
+      skuId,
+      name: skuById(skuId)?.name ?? skuId,
+      ...counts,
+    }))
+    .sort((a, b) => b.inserted - a.inserted || a.name.localeCompare(b.name));
 }

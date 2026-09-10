@@ -39,22 +39,67 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ## Refreshing the data
 
 1. Open **Import data**
-2. Drag in the review workbooks — both brands at once is fine
+2. Drag in the spreadsheets — .xlsx, .xls or .csv, both brands at once is fine
 3. Read the report
 
 The report is the point. It tells you rows read, reviews parsed, how many were
-added, how many were already there, and anything about the paste worth a look.
+added, how many were already there, which rows could not be read and why, and
+anything about the data worth a look.
 
 Re-importing a file you have already loaded is safe. Every review gets a hash
 of SKU + reviewer + date + title + opening text, so overlapping monthly exports
 add only what is new. Importing September twice adds 339 then 0.
 
+## The model template
+
+The shape to aim for is a plain table, one row per review. Download it blank
+from the button on the import page, or at `/api/template` (`?format=csv` for
+the CSV). The .xlsx version carries three sheets: the empty grid, the twelve
+products with their ASINs, and a column guide.
+
+| Column | Needed | Notes |
+|---|---|---|
+| Product | required | Name, model code or slug. Or fill in ASIN instead |
+| ASIN | — | An alternative to Product |
+| Rating | required | `4`, `4.0` and `4.0 out of 5 stars` all read as 4 |
+| Title | one of the two | Plenty of real reviews are title-only |
+| Review | one of the two | |
+| Date | required | `YYYY-MM-DD` is safest. A bare `10/08/2026` is read day-first |
+| Reviewer | — | Blank becomes "Amazon Customer" |
+| Verified purchase | — | Yes/No. Blank means no, and this column moves the headline numbers |
+| Variant | — | Colour or size |
+| Country | — | Blank becomes India |
+
+Column order does not matter and extra columns are ignored. Headers are matched
+loosely — case, spaces and punctuation are ignored, and each column carries a
+list of aliases, so `productName,stars,reviewTitle,date,isVerified` out of a
+scraper is read without editing the file. A header row sitting under a title
+row is found.
+
+**`lib/template.ts` is the single source of truth.** The blank template handed
+out, the headers the parser accepts, and the column table on the import page
+are all generated from the same array, so they cannot drift apart. Adding a
+column means adding one entry there.
+
+Rows that cannot be read are listed back with their spreadsheet row number and
+the reason — unknown product, no usable rating, no usable date, nothing
+written in it — rather than dropped. Everything else in the file still imports.
+
+### The older shape still works
+
+The hand-pasted workbooks, one sheet per SKU of raw Amazon blocks, import
+exactly as before. Every sheet is offered to the template reader first, so a
+file in either shape works. See *What the source data actually looks like*
+below before changing `lib/parse/records.ts`.
+
 ### If the import is refused
 
 An unrecognised worksheet tab stops the whole import rather than silently
-dropping those reviews. Tab names in these exports do not match product names
-(`6.2 Air fryer` is `Ninja Air Fryer 6.2L`), so when a new tab name appears,
-add it to that SKU's `sheetNames` in **`lib/skus.ts`** and import again.
+dropping those reviews, and nothing is written — not even the tabs that did
+parse. Tab names in the pasted exports do not match product names (`6.2 Air
+fryer` is `Ninja Air Fryer 6.2L`), so when a new tab name appears, either
+switch that file to the template or add the tab name to that SKU's
+`sheetNames` in **`lib/skus.ts`**, and import again.
 
 ## What the source data actually looks like
 
@@ -174,10 +219,15 @@ npx tsx scripts/build-seed.ts ~/Downloads/SharkNinjaBrief/*.xlsx
 npm test
 ```
 
-26 tests. The parser fixtures are verbatim rows from the September 2026 export
-rather than invented examples, and the last suite parses the real workbooks and
+52 tests. The parser fixtures are verbatim rows from the September 2026 export
+rather than invented examples, and one suite parses the real workbooks and
 asserts the per-SKU counts, so a regression in the record grammar fails loudly.
 That suite skips itself if the files aren't on the machine.
+
+The template tests write the whole September export back out as a CSV and read
+it in again, asserting all 336 review hashes come back unchanged. That is the
+test that catches an encoding or date regression, because both corrupt data
+while the import still reports success.
 
 ### A local build quirk
 
@@ -211,13 +261,16 @@ is a decision for SharkNinja, not a technical detail.
 ## Layout
 
 ```
-lib/parse/records.ts     the record grammar — read this first
-lib/parse/workbook.ts    worksheet → reviews, plus the headed-table path
+lib/template.ts          the model template: columns, aliases, blank download
+lib/parse/table.ts       the template reader, and why a row was refused
+lib/parse/records.ts     the pasted-block grammar — read this first
+lib/parse/workbook.ts    file → sheets → reviews, and the CSV text decoding
 lib/skus.ts              the 12 SKUs, their ASINs, and tab-name mappings
 lib/classify/            problem-area rules and the swap-in seam
 lib/aggregate.ts         summaries, clouds, themes, trends, and the gates
 lib/validate.ts          paste-quality warnings
 lib/store.ts             Postgres, with a local file fallback
 app/                     login, brand picker, brand overview, SKU detail, import
+app/api/template/        the blank template, generated not checked in
 scripts/                 one-off checks used while tuning the rules
 ```

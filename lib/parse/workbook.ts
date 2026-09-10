@@ -1,11 +1,14 @@
 import * as XLSX from "xlsx";
-import { skuForSheet, SKUS } from "../skus";
-import type { ParsedReview } from "../types";
+import { skuForSheet } from "../skus";
+import type { ParsedReview, SkippedRow } from "../types";
 import { parseSheet } from "./records";
+import { parseTable } from "./table";
 
 export type SheetResult = {
   sheetName: string;
   skuId: string | null;
+  /** How the sheet was read, which is worth saying out loud in the report. */
+  shape: "template" | "pasted-blocks";
   rows: number;
   reviews: ParsedReview[];
 };
@@ -13,12 +16,48 @@ export type SheetResult = {
 export type WorkbookResult = {
   sheets: SheetResult[];
   unmappedSheets: string[];
+  skippedRows: SkippedRow[];
   reviews: ParsedReview[];
   rowsRead: number;
 };
 
-/** Index sheets carry the product list, not reviews. */
-const INDEX_SHEETS = /^(sheet1|index|products?|links?)$/i;
+/**
+ * Sheets that carry the product list or the instructions rather than reviews.
+ * Only consulted after the template check, because a CSV is handed to us as a
+ * single sheet named "Sheet1" and skipping it on the name alone silently threw
+ * every row away.
+ */
+const INDEX_SHEETS = /^(sheet1|index|products?|links?|how to fill this in|guide|instructions?|readme)$/i;
+
+/**
+ * Spreadsheet formats are binary containers; a CSV is just text, and SheetJS
+ * decodes an undeclared byte buffer as Windows-1252. Every curly apostrophe and
+ * emoji in the real reviews then arrives as mojibake, silently, because the
+ * import still succeeds. So sniff the container and decode text ourselves.
+ */
+function readWorkbook(input: ArrayBuffer | Buffer): XLSX.WorkBook {
+  const buf = Buffer.isBuffer(input) ? input : Buffer.from(input);
+
+  const isZip = buf.length > 1 && buf[0] === 0x50 && buf[1] === 0x4b; // xlsx, xlsm
+  const isOle =
+    buf.length > 7 && buf[0] === 0xd0 && buf[1] === 0xcf && buf[2] === 0x11; // legacy xls
+  if (isZip || isOle) return XLSX.read(buf, { type: "buffer", cellDates: true });
+
+  let text: string;
+  if (buf.length > 1 && buf[0] === 0xff && buf[1] === 0xfe) {
+    text = buf.subarray(2).toString("utf16le");
+  } else if (buf.length > 1 && buf[0] === 0xfe && buf[1] === 0xff) {
+    const swapped = Buffer.from(buf.subarray(2));
+    swapped.swap16();
+    text = swapped.toString("utf16le");
+  } else {
+    text = buf.toString("utf8").replace(/^\uFEFF/, "");
+  }
+  // raw: true leaves every CSV cell as the text it was. Without it SheetJS
+  // reads "10/08/2026" as the eighth of October: month-first, US convention,
+  // on an Amazon.in export. Dates are ours to interpret, not its.
+  return XLSX.read(text, { type: "string", raw: true });
+}
 
 /** Flatten one worksheet into row-ordered strings (all columns joined). */
 function sheetToLines(ws: XLSX.WorkSheet): string[] {
@@ -32,34 +71,46 @@ function sheetToLines(ws: XLSX.WorkSheet): string[] {
     (Array.isArray(r) ? r : [])
       .map((c) => (c == null ? "" : String(c)))
       .join(" ")
-      .replace(/ /g, " ")
+      .replace(/ /g, " ")
       .trim(),
   );
 }
 
 /**
- * Reads a workbook laid out as one sheet per SKU of raw pasted Amazon blocks.
- * If a sheet has proper headers (Product/Rating/ReviewText...), it is read as a
- * table instead — that's the shape a future scraper export will have.
+ * Two shapes go in and reviews come out.
+ *
+ * The model template is a headed table, one row per review, and is what we ask
+ * for. The other shape is how the data actually arrives today: one sheet per
+ * SKU holding raw blocks pasted out of the browser, matched to a SKU by tab
+ * name. Every sheet is offered to the template reader first, so a file in the
+ * asked-for shape works whatever its tabs are called, and a .csv works at all.
  */
 export function parseWorkbook(buf: ArrayBuffer | Buffer): WorkbookResult {
-  const wb = XLSX.read(buf, { type: "buffer", cellDates: false });
+  const wb = readWorkbook(buf);
   const sheets: SheetResult[] = [];
   const unmapped: string[] = [];
+  const skippedRows: SkippedRow[] = [];
   let rowsRead = 0;
 
   for (const sheetName of wb.SheetNames) {
     const ws = wb.Sheets[sheetName];
     if (!ws) continue;
 
-    if (INDEX_SHEETS.test(sheetName.trim())) continue;
-
-    const tabular = tryParseTabular(ws);
-    if (tabular) {
-      rowsRead += tabular.rows;
-      sheets.push({ sheetName, skuId: null, rows: tabular.rows, reviews: tabular.reviews });
+    const table = parseTable(ws, sheetName);
+    if (table) {
+      rowsRead += table.rows;
+      skippedRows.push(...table.skipped);
+      sheets.push({
+        sheetName,
+        skuId: null,
+        shape: "template",
+        rows: table.rows,
+        reviews: table.reviews,
+      });
       continue;
     }
+
+    if (INDEX_SHEETS.test(sheetName.trim())) continue;
 
     const sku = skuForSheet(sheetName);
     const lines = sheetToLines(ws);
@@ -73,6 +124,7 @@ export function parseWorkbook(buf: ArrayBuffer | Buffer): WorkbookResult {
     sheets.push({
       sheetName,
       skuId: sku.id,
+      shape: "pasted-blocks",
       rows: lines.length,
       reviews: parseSheet(sku.id, lines),
     });
@@ -81,75 +133,8 @@ export function parseWorkbook(buf: ArrayBuffer | Buffer): WorkbookResult {
   return {
     sheets,
     unmappedSheets: unmapped,
+    skippedRows,
     reviews: sheets.flatMap((s) => s.reviews),
     rowsRead,
   };
-}
-
-/**
- * The forward-compatible path: a proper table with named columns, which is what
- * the Apify actor's export looks like. Returns null if this sheet isn't one.
- */
-function tryParseTabular(
-  ws: XLSX.WorkSheet,
-): { rows: number; reviews: ParsedReview[] } | null {
-  const json = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, {
-    defval: "",
-    raw: false,
-  });
-  if (json.length === 0) return null;
-
-  const keys = Object.keys(json[0]).map((k) => k.trim().toLowerCase());
-  const has = (n: string) => keys.includes(n);
-  if (!(has("rating") && (has("reviewtext") || has("body") || has("text")))) {
-    return null;
-  }
-
-  const pick = (row: Record<string, unknown>, names: string[]): string => {
-    for (const [k, v] of Object.entries(row)) {
-      if (names.includes(k.trim().toLowerCase())) return v == null ? "" : String(v);
-    }
-    return "";
-  };
-
-  const reviews: ParsedReview[] = [];
-  for (const row of json) {
-    const productName = pick(row, ["product", "productname", "sku", "title_product"]);
-    const sku =
-      SKUS.find((s) => s.name.toLowerCase() === productName.trim().toLowerCase()) ??
-      SKUS.find((s) => s.asin.toLowerCase() === pick(row, ["asin"]).trim().toLowerCase());
-    if (!sku) continue;
-
-    const rating = Number(pick(row, ["rating", "stars", "score"]));
-    if (!Number.isFinite(rating) || rating < 1 || rating > 5) continue;
-
-    const rawDate = pick(row, ["reviewdate", "date"]);
-    const iso = normaliseDate(rawDate);
-    if (!iso) continue;
-
-    const verifiedRaw = pick(row, ["verified", "verifiedpurchase", "isverified"]).toLowerCase();
-
-    reviews.push({
-      skuId: sku.id,
-      reviewer: pick(row, ["reviewer", "author", "name", "username"]) || "Amazon Customer",
-      rating: Math.round(rating),
-      title: pick(row, ["title", "reviewtitle", "headline"]),
-      body: pick(row, ["reviewtext", "body", "text", "content"]).replace(/\s+/g, " ").trim(),
-      reviewDate: iso,
-      verified: ["true", "yes", "1", "verified purchase"].includes(verifiedRaw),
-      country: pick(row, ["country", "countryofreview"]) || "India",
-      variant: pick(row, ["variant", "colour", "color"]) || null,
-    });
-  }
-
-  return { rows: json.length, reviews };
-}
-
-function normaliseDate(raw: string): string | null {
-  const s = raw.trim();
-  if (!s) return null;
-  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
-  const d = new Date(s);
-  if (!Number.isNaN(d.getTime())) return d.toISOString().slice(0, 10);
-  return null;
 }
