@@ -224,6 +224,21 @@ describe("cell readers", () => {
     assert.equal(parseDateCell("08/13/2026"), "2026-08-13");
   });
 
+  it("refuses a two-digit year it cannot place", () => {
+    // "26-08-10" is the 26th of August 2010 day-first, or the 10th of August
+    // 2026 year-first. Nothing in the cell says which, so neither is returned.
+    assert.equal(parseDateCell("26-08-10"), null);
+    assert.equal(parseDateCell("10-08-26"), "2026-08-10");
+  });
+
+  it("reads the day that is written, not the day in this timezone", () => {
+    // A scraper export with a time and a zone. Handing the whole string to
+    // Date and taking its local day makes this the 11th in India.
+    assert.equal(parseDateCell("10 Aug 2026 23:00 GMT"), "2026-08-10");
+    assert.equal(parseDateCell("Reviewed in India on 10 August 2026 23:00"), "2026-08-10");
+    assert.equal(parseDateCell("2026-08-10T23:00:00Z"), "2026-08-10");
+  });
+
   it("reads the verified flag without treating blank as yes", () => {
     assert.equal(parseVerified("Yes"), true);
     assert.equal(parseVerified("TRUE"), true);
@@ -231,6 +246,59 @@ describe("cell readers", () => {
     assert.equal(parseVerified(""), false);
     assert.equal(parseVerified("No"), false);
     assert.equal(parseVerified("n"), false);
+  });
+});
+
+describe("headers that mean something else elsewhere", () => {
+  // Found by a second model reading the parser cold. Each of these was wrong.
+  it("prefers the clear header over the vague one, whatever the order", () => {
+    const out = parseWorkbook(
+      Buffer.from(
+        "Title,Review Title,ASIN,Rating,Date\nNinja Blast blender,Loved it,B0FWY5Y7VF,5,2026-07-14\n",
+        "utf8",
+      ),
+    );
+    // "Title" is the product's in a catalogue dump, so the review headline has
+    // to come from "Review Title" even though it appears second.
+    assert.equal(out.reviews[0].title, "Loved it");
+  });
+
+  it("does the same for Description against Review Text", () => {
+    const out = parseWorkbook(
+      Buffer.from(
+        "Product,Description,Review Text,Rating,Date\nNinja Blast,A 530ml blender,Loved it,5,2026-07-14\n",
+        "utf8",
+      ),
+    );
+    assert.equal(out.reviews[0].body, "Loved it");
+  });
+
+  it("does the same for Name against Author", () => {
+    const out = parseWorkbook(
+      Buffer.from(
+        "Product,Name,Author,Rating,Title,Date\nNinja Blast,Ninja Blast,Surendhran S,5,Good,2026-07-14\n",
+        "utf8",
+      ),
+    );
+    assert.equal(out.reviews[0].reviewer, "Surendhran S");
+  });
+
+  it("refuses a sheet whose every header is a vague one", () => {
+    // Model/Score/Summary alias to product/rating/title, so an ML evaluation
+    // or a scorecard used to import as reviews rather than being refused.
+    const out = parseWorkbook(
+      Buffer.from("Model,Score,Summary\nAF180IN,4,Performs well\n", "utf8"),
+    );
+    assert.equal(out.reviews.length, 0);
+    assert.deepEqual(out.unmappedSheets, []);
+  });
+
+  it("still accepts a sheet where only some headers are vague", () => {
+    const out = parseWorkbook(
+      Buffer.from("Model,Stars,Summary,Date\nAF180IN,4,Performs well,2026-07-14\n", "utf8"),
+    );
+    assert.equal(out.reviews.length, 1);
+    assert.equal(out.reviews[0].skuId, "ninja-air-fryer-6-2l");
   });
 });
 

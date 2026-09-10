@@ -1,6 +1,6 @@
 import * as XLSX from "xlsx";
 import { SKUS } from "../skus";
-import { columnKeyFor, looksLikeTemplate } from "../template";
+import { headerMatch, looksLikeTemplate } from "../template";
 import type { ParsedReview, SkippedRow } from "../types";
 
 export type TableResult = {
@@ -46,13 +46,7 @@ export function parseTable(ws: XLSX.WorkSheet, sheetName: string): TableResult |
   if (headerIndex === -1) return null;
 
   const headers = (grid[headerIndex] ?? []).map(asString);
-  const columns = new Map<string, number>();
-  headers.forEach((h, idx) => {
-    const key = columnKeyFor(h);
-    // First column wins, so a stray duplicate header later on cannot shadow the
-    // real one.
-    if (key && !columns.has(key)) columns.set(key, idx);
-  });
+  const columns = assignColumns(headers);
 
   const reviews: ParsedReview[] = [];
   const skipped: SkippedRow[] = [];
@@ -140,6 +134,34 @@ export function parseTable(ws: XLSX.WorkSheet, sheetName: string): TableResult |
   }
 
   return { headerRow: headerIndex + 1, rows, reviews, skipped };
+}
+
+/**
+ * Header text to column index.
+ *
+ * Two passes, because column order is not evidence. A sheet headed
+ * `Title, Review Title` in that order used to read the product title as the
+ * review headline and ignore the real one, on nothing but position. Clear
+ * headers claim their column first; the vague ones only fill what is left.
+ */
+function assignColumns(headers: string[]): Map<string, number> {
+  const columns = new Map<string, number>();
+  const later: { key: string; idx: number }[] = [];
+
+  headers.forEach((h, idx) => {
+    const m = headerMatch(h);
+    if (!m) return;
+    if (m.ambiguous) {
+      later.push({ key: m.key, idx });
+      return;
+    }
+    // Among equally clear headers the first still wins, so a stray duplicate
+    // cannot shadow the real one.
+    if (!columns.has(m.key)) columns.set(m.key, idx);
+  });
+
+  for (const { key, idx } of later) if (!columns.has(key)) columns.set(key, idx);
+  return columns;
 }
 
 function asString(c: Cell): string {
@@ -250,11 +272,30 @@ export function parseDateCell(cell: Cell): string | null {
   const numeric = s.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})$/);
   if (numeric) {
     let [d, m] = [Number(numeric[1]), Number(numeric[2])];
+    const twoDigitYear = numeric[3].length <= 2;
+    // "26-08-10" is either the 26th of August 2010 read day-first, or the 10th
+    // of August 2026 read year-first, and nothing in the cell says which.
+    // Refuse it and name the row rather than pick one and be silently wrong.
+    if (twoDigitYear && d > 12) return null;
     if (d > 12 && m > 12) return null;
     if (d <= 12 && m > 12) [d, m] = [m, d];
     if (d > 31 || m > 12 || d < 1 || m < 1) return null;
-    const y = Number(numeric[3]) < 100 ? 2000 + Number(numeric[3]) : Number(numeric[3]);
+    const y = twoDigitYear ? 2000 + Number(numeric[3]) : Number(numeric[3]);
     return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+  }
+
+  // A date with a time and a zone on it — what scrapers export. Read the
+  // calendar day that is written down. Handing the whole string to Date and
+  // taking its local day turns "10 Aug 2026 23:00 GMT" into the 11th in India.
+  const embedded =
+    s.match(/\b(\d{1,2})\s+([A-Za-z]{3,})\.?,?\s+(\d{4})\b/) ??
+    s.match(/\b([A-Za-z]{3,})\.?\s+(\d{1,2}),?\s+(\d{4})\b/);
+  if (embedded) {
+    const dayFirst = /^\d/.test(embedded[1]);
+    const day = dayFirst ? embedded[1] : embedded[2];
+    const monthWord = dayFirst ? embedded[2] : embedded[1];
+    const mm = MONTHS[monthWord.slice(0, 3).toLowerCase()];
+    if (mm) return `${embedded[3]}-${mm}-${day.padStart(2, "0")}`;
   }
 
   const parsed = new Date(s);

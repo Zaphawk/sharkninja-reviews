@@ -25,6 +25,14 @@ export type TemplateColumn = {
    * hand will write "Review Date" rather than "date".
    */
   aliases: string[];
+  /**
+   * Headers that mean this column here but something else in a product export:
+   * "Title" and "Description" are the item's, not the review's, in an Amazon
+   * catalogue dump. They are only used when no clearer header claims the
+   * column, and a sheet made of nothing but these is not treated as a review
+   * table at all.
+   */
+  ambiguous?: string[];
   required: boolean;
   note: string;
   example: string;
@@ -35,6 +43,7 @@ export const TEMPLATE_COLUMNS: TemplateColumn[] = [
     key: "product",
     label: "Product",
     aliases: ["productname", "sku", "skuname", "item", "model", "titleproduct"],
+    ambiguous: ["item", "model"],
     required: true,
     note:
       "The product name exactly as it appears in the SKU list on the second sheet. Its model code or slug works too. Leave blank only if you have filled in ASIN.",
@@ -52,6 +61,7 @@ export const TEMPLATE_COLUMNS: TemplateColumn[] = [
     key: "rating",
     label: "Rating",
     aliases: ["stars", "score", "star", "starrating", "reviewrating", "overall"],
+    ambiguous: ["score", "overall"],
     required: true,
     note:
       "1 to 5. \"4\", \"4.0\" and \"4.0 out of 5 stars\" are all read as 4. A row without a usable rating is reported, not imported.",
@@ -61,6 +71,7 @@ export const TEMPLATE_COLUMNS: TemplateColumn[] = [
     key: "title",
     label: "Title",
     aliases: ["reviewtitle", "headline", "summary", "reviewheadline"],
+    ambiguous: ["title", "summary"],
     required: false,
     note:
       "The bold line above the review. Title or Review has to have something in it — plenty of real reviews are title-only.",
@@ -70,6 +81,7 @@ export const TEMPLATE_COLUMNS: TemplateColumn[] = [
     key: "review",
     label: "Review",
     aliases: ["reviewtext", "body", "text", "content", "comment", "description", "reviewbody"],
+    ambiguous: ["text", "content", "description"],
     required: false,
     note: "The review itself. Line breaks inside the cell are fine.",
     example: "Arrived with a broken basket straight out of the box and nobody replied.",
@@ -87,6 +99,7 @@ export const TEMPLATE_COLUMNS: TemplateColumn[] = [
     key: "reviewer",
     label: "Reviewer",
     aliases: ["author", "name", "username", "customer", "reviewername", "profilename"],
+    ambiguous: ["name", "customer"],
     required: false,
     note: "Blank becomes \"Amazon Customer\". Used to tell two reviews apart, so keep it if you have it.",
     example: "Surendhran S",
@@ -123,26 +136,47 @@ export const TEMPLATE_COLUMNS: TemplateColumn[] = [
 export const normaliseHeader = (h: string) =>
   h.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
 
-const HEADER_LOOKUP: Map<string, string> = new Map(
-  TEMPLATE_COLUMNS.flatMap((c) => [
-    [normaliseHeader(c.label), c.key] as [string, string],
-    [normaliseHeader(c.key), c.key] as [string, string],
-    ...c.aliases.map((a) => [normaliseHeader(a), c.key] as [string, string]),
-  ]),
+export type HeaderMatch = { key: string; ambiguous: boolean };
+
+const HEADER_LOOKUP: Map<string, HeaderMatch> = new Map(
+  TEMPLATE_COLUMNS.flatMap((c) => {
+    const vague = new Set((c.ambiguous ?? []).map(normaliseHeader));
+    const entry = (h: string): [string, HeaderMatch] => [
+      normaliseHeader(h),
+      { key: c.key, ambiguous: vague.has(normaliseHeader(h)) },
+    ];
+    return [entry(c.label), entry(c.key), ...c.aliases.map(entry)];
+  }),
 );
 
-export function columnKeyFor(header: string): string | undefined {
+export function headerMatch(header: string): HeaderMatch | undefined {
   return HEADER_LOOKUP.get(normaliseHeader(header));
 }
 
-/** A sheet is the model template if it carries a rating column and something to read. */
+export function columnKeyFor(header: string): string | undefined {
+  return headerMatch(header)?.key;
+}
+
+/**
+ * A sheet is the model template if it carries a rating, something to identify
+ * the product, and something to read.
+ *
+ * At least one of its headers has to name itself unambiguously. Otherwise
+ * `Model, Score, Summary` — an ML evaluation, a scorecard, anything — reads as
+ * product, rating and title, and a wrong file uploaded by mistake fills the
+ * dashboard with rows that are not reviews instead of being refused.
+ */
 export function looksLikeTemplate(headers: string[]): boolean {
-  const keys = new Set(
-    headers.map((h) => columnKeyFor(h)).filter((k): k is string => Boolean(k)),
-  );
+  const matches = headers
+    .map((h) => headerMatch(h))
+    .filter((m): m is HeaderMatch => Boolean(m));
+
+  const keys = new Set(matches.map((m) => m.key));
   const hasSubject = keys.has("product") || keys.has("asin");
   const hasContent = keys.has("review") || keys.has("title");
-  return keys.has("rating") && hasSubject && hasContent;
+  const namesItself = matches.some((m) => !m.ambiguous);
+
+  return keys.has("rating") && hasSubject && hasContent && namesItself;
 }
 
 const HEADERS = TEMPLATE_COLUMNS.map((c) => c.label);

@@ -76,6 +76,14 @@ list of aliases, so `productName,stars,reviewTitle,date,isVerified` out of a
 scraper is read without editing the file. A header row sitting under a title
 row is found.
 
+Some headers mean this column here and something else in a product export:
+`Title` and `Description` are the item's in an Amazon catalogue dump, `Name` is
+often the product's. Those are marked `ambiguous` in `lib/template.ts` and only
+claim a column when no clearer header wants it, whatever the column order. A
+sheet whose headers are *all* vague — `Model, Score, Summary` — is not treated
+as reviews at all, so uploading the wrong file is refused rather than filling
+the dashboard with rows that are not reviews.
+
 **`lib/template.ts` is the single source of truth.** The blank template handed
 out, the headers the parser accepts, and the column table on the import page
 are all generated from the same array, so they cannot drift apart. Adding a
@@ -219,7 +227,7 @@ npx tsx scripts/build-seed.ts ~/Downloads/SharkNinjaBrief/*.xlsx
 npm test
 ```
 
-52 tests. The parser fixtures are verbatim rows from the September 2026 export
+60 tests. The parser fixtures are verbatim rows from the September 2026 export
 rather than invented examples, and one suite parses the real workbooks and
 asserts the per-SKU counts, so a regression in the record grammar fails loudly.
 That suite skips itself if the files aren't on the machine.
