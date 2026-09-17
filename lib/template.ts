@@ -227,10 +227,11 @@ function guideRows(): string[][] {
   ];
 }
 
-export function templateWorkbook(): Buffer {
+export function templateWorkbook(opts?: { blank?: boolean }): Buffer {
   const wb = XLSX.utils.book_new();
 
-  const reviews = XLSX.utils.aoa_to_sheet([HEADERS, ...EXAMPLE_ROWS]);
+  const rows = opts?.blank ? [HEADERS] : [HEADERS, ...EXAMPLE_ROWS];
+  const reviews = XLSX.utils.aoa_to_sheet(rows);
   reviews["!cols"] = [
     { wch: 26 }, { wch: 13 }, { wch: 8 }, { wch: 34 }, { wch: 60 },
     { wch: 13 }, { wch: 20 }, { wch: 17 }, { wch: 22 }, { wch: 10 },
@@ -249,7 +250,8 @@ export function templateWorkbook(): Buffer {
   return XLSX.write(wb, { type: "buffer", bookType: "xlsx" }) as Buffer;
 }
 
-export function templateCsv(): string {
-  const sheet = XLSX.utils.aoa_to_sheet([HEADERS, ...EXAMPLE_ROWS]);
+export function templateCsv(opts?: { blank?: boolean }): string {
+  const rows = opts?.blank ? [HEADERS] : [HEADERS, ...EXAMPLE_ROWS];
+  const sheet = XLSX.utils.aoa_to_sheet(rows);
   return XLSX.utils.sheet_to_csv(sheet);
 }

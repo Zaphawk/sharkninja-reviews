@@ -13,6 +13,7 @@ import { loadReviews } from "@/lib/data";
 import { amazonUrl, BRANDS, skuById } from "@/lib/skus";
 import { getSkuInsight } from "@/lib/insights";
 import { BucketBars, InsightCard, ThemeList } from "@/components/Insights";
+import { ReviewExplorer } from "@/components/ReviewExplorer";
 import {
   InsufficientBadge,
   NotEnough,
@@ -134,59 +135,10 @@ export default async function SkuPage({
       </Panel>
 
       <Panel
-        title="Recent reviews"
-        subtitle="Newest first — the raw text behind everything above"
+        title="Customer reviews explorer"
+        subtitle={`All ${reviews.length} customer review${reviews.length === 1 ? "" : "s"} for this listing. Search keywords, filter by star rating, or drill down by verified status and problem area.`}
       >
-        <ul className="divide-y divide-silver-light">
-          {reviews.slice(0, 12).map((r) => (
-            <li key={r.hash} className="py-3 first:pt-0 last:pb-0">
-              <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
-                <span
-                  className={`tabular rounded px-1.5 py-0.5 text-[12px] font-bold ${
-                    r.rating >= 4
-                      ? "bg-teal-tint text-teal-dark"
-                      : r.rating === 3
-                        ? "bg-silver-light text-ink-60"
-                        : "bg-[#fdefee] text-[#c8322b]"
-                  }`}
-                >
-                  {r.rating}★
-                </span>
-                <span className="text-[13px] font-semibold">{r.title}</span>
-                <span className="text-[12px] text-ink-60">
-                  {r.reviewer} · {r.reviewDate}
-                  {r.verified ? " · verified" : " · unverified"}
-                </span>
-              </div>
-              {r.body ? (
-                <p className="mt-1 text-[13px] leading-relaxed text-ink-60">
-                  {r.body.length > 320 ? `${r.body.slice(0, 320)}…` : r.body}
-                </p>
-              ) : (
-                <p className="mt-1 text-[12px] italic text-ink-60">
-                  Title only — no review body.
-                </p>
-              )}
-              {r.buckets.length > 0 ? (
-                <div className="mt-1.5 flex flex-wrap gap-1.5">
-                  {r.buckets.map((b) => (
-                    <span
-                      key={b}
-                      className="rounded-full border border-silver-light px-2 py-0.5 text-[11px] text-ink-60"
-                    >
-                      {b}
-                    </span>
-                  ))}
-                </div>
-              ) : null}
-            </li>
-          ))}
-        </ul>
-        {reviews.length > 12 ? (
-          <p className="mt-3 text-[12px] text-ink-60">
-            Showing 12 of {reviews.length}.
-          </p>
-        ) : null}
+        <ReviewExplorer reviews={reviews} skuName={sku.name} />
       </Panel>
     </div>
   );

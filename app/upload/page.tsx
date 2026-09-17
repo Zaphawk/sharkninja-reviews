@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { UploadForm } from "@/components/UploadForm";
 import { loadReviews } from "@/lib/data";
-import { getStore, snapshotGeneratedAt, usingSnapshot } from "@/lib/store";
+import { getStore, getStoreDescription, usingSnapshot } from "@/lib/store";
 import { dateRange } from "@/lib/aggregate";
 import { Panel } from "@/components/Stat";
 import { TemplatePanel } from "@/components/TemplatePanel";
@@ -29,22 +29,22 @@ export default async function UploadPage() {
         </p>
       </div>
 
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-line bg-surface px-4 py-2.5 text-[12px] text-ink-60">
+        <div>
+          Active database: <strong className="text-ink">{getStoreDescription()}</strong>
+        </div>
+        <div className="text-[11px]">
+          {reviews.length} reviews loaded {range ? `(${range.from} to ${range.to})` : ""}
+        </div>
+      </div>
+
       {snapshot ? (
         <div className="rounded-lg border border-warn-line bg-warn-bg p-4 text-[13px] text-warn">
-          <b>This deployment is showing a snapshot.</b> No database is connected,
-          so it is serving the export baked in on{" "}
-          {new Date(snapshotGeneratedAt).toLocaleDateString("en-GB", {
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-          })}
-          {". Everything on the dashboard is real, but importing is switched off until a "}
-          <code>DATABASE_URL</code>
-          {" is set — a read-only host has nowhere to put new reviews. The template below is still the right thing to fill in."}
+          <b>Showing bundled snapshot (read-only mode).</b> Set DATABASE_URL or run with SQLite to persist new imports.
         </div>
-      ) : (
-        <UploadForm />
-      )}
+      ) : null}
+
+      <UploadForm />
 
       <TemplatePanel />
 

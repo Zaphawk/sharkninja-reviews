@@ -1,9 +1,12 @@
 import Link from "next/link";
-import { portfolio } from "@/lib/aggregate";
+import { portfolio, reviewsForSku } from "@/lib/aggregate";
 import { loadReviews } from "@/lib/data";
 import { snapshotGeneratedAt, usingSnapshot } from "@/lib/store";
+import { getAllInsights, getSkuInsight } from "@/lib/insights";
+import { skuById } from "@/lib/skus";
+import { ExecutiveBriefing } from "@/components/ExecutiveBriefing";
+import { MasterSkuTable } from "@/components/MasterSkuTable";
 import {
-  DirectionPill,
   Panel,
   SentimentBar,
   SentimentLegend,
@@ -37,6 +40,19 @@ export default async function Home() {
   const port = portfolio(reviews);
   const range = port.range;
 
+  const rawInsights = getAllInsights();
+  const enrichedInsights = rawInsights.insights.map((ins) => {
+    const sku = skuById(ins.skuId);
+    const skuReviews = reviewsForSku(reviews, ins.skuId);
+    const { isStale } = getSkuInsight(ins.skuId, skuReviews);
+    return {
+      ...ins,
+      skuName: sku ? sku.name : ins.skuId,
+      brand: sku ? sku.brand : "Unknown",
+      isStale,
+    };
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -51,12 +67,22 @@ export default async function Home() {
             ) : null}
           </p>
         </div>
-        <Link
-          href="/upload"
-          className="rounded-lg border border-line bg-surface px-3 py-1.5 text-[12px] font-semibold text-ink hover:bg-canvas"
-        >
-          Import Data
-        </Link>
+        <div className="flex items-center gap-2">
+          <a
+            download
+            href="/api/template?format=xlsx&blank=1"
+            className="rounded-lg border border-line bg-surface px-3 py-1.5 text-[12px] font-semibold text-ink hover:bg-canvas"
+            title="Download blank import template (.xlsx)"
+          >
+            Download Template
+          </a>
+          <Link
+            href="/upload"
+            className="rounded-lg bg-teal px-3 py-1.5 text-[12px] font-semibold text-white transition hover:bg-[color:var(--color-teal-bright)]"
+          >
+            Import Data
+          </Link>
+        </div>
       </div>
 
       {usingSnapshot() ? (
@@ -111,6 +137,13 @@ export default async function Home() {
         />
       </div>
 
+      {/* AI Executive Intelligence Briefing */}
+      <ExecutiveBriefing
+        insights={enrichedInsights}
+        model={rawInsights.model}
+        generatedAt={rawInsights.generatedAt}
+      />
+
       {/* Brand Rollups */}
       <div className="grid gap-5 sm:grid-cols-2">
         {port.brands.map((t) => (
@@ -156,64 +189,7 @@ export default async function Home() {
         title="All Listings Ranked (Attention Priority)"
         subtitle="Ranked worst-first on verified purchase average so critical issues remain visible. Small sample size listings (<10 verified) sink below active lines."
       >
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[620px] text-[13px]">
-            <thead>
-              <tr className="border-b border-line text-left text-[11px] font-bold uppercase tracking-[0.08em] text-ink-40">
-                <th className="pb-2.5">Product</th>
-                <th className="pb-2.5">Brand</th>
-                <th className="pb-2.5 text-right">Verified Avg</th>
-                <th className="pb-2.5 text-center">Trend</th>
-                <th className="pb-2.5 text-right">% Negative</th>
-                <th className="pb-2.5 pl-4">Top Issue</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-line-soft">
-              {port.skus.map((s) => (
-                <tr
-                  key={s.sku.id}
-                  className="transition hover:bg-canvas"
-                >
-                  <td className="py-3">
-                    <Link
-                      href={`/${s.brand.toLowerCase()}/${s.sku.id}`}
-                      className="font-semibold hover:text-teal"
-                    >
-                      {s.sku.name}
-                    </Link>
-                    {s.insufficient ? (
-                      <span className="ml-2 rounded border border-warn-line bg-warn-bg px-1.5 py-0.5 text-[10px] font-semibold text-warn">
-                        low data
-                      </span>
-                    ) : null}
-                  </td>
-                  <td className="py-3 text-ink-60">{s.brand}</td>
-                  <td className="tabular py-3 text-right font-medium">
-                    <Stars value={s.verified.avg} />
-                  </td>
-                  <td className="py-3 text-center">
-                    <DirectionPill d={s.direction} />
-                  </td>
-                  <td className="tabular py-3 text-right text-ink-60">
-                    {s.all.n === 0 ? "—" : `${s.all.pctNegative.toFixed(0)}%`}
-                  </td>
-                  <td className="py-3 pl-4 text-[12px] text-ink-40">
-                    {s.topProblem ? (
-                      <span>
-                        <span className="font-semibold text-ink-60">
-                          {s.topProblem.bucket}
-                        </span>{" "}
-                        ({s.topProblem.pct.toFixed(0)}%)
-                      </span>
-                    ) : (
-                      "—"
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <MasterSkuTable rows={port.skus} />
       </Panel>
     </div>
   );

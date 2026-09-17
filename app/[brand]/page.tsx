@@ -4,11 +4,14 @@ import {
   brandStats,
   bucketTable,
   cloudFor,
+  reviewsForSku,
   themesFor,
 } from "@/lib/aggregate";
 import { loadReviews } from "@/lib/data";
-import { BRANDS } from "@/lib/skus";
+import { BRANDS, skuById } from "@/lib/skus";
 import type { Brand } from "@/lib/types";
+import { getAllInsights, getSkuInsight } from "@/lib/insights";
+import { ExecutiveBriefing } from "@/components/ExecutiveBriefing";
 import {
   NotEnough,
   Panel,
@@ -42,6 +45,24 @@ export default async function BrandPage({
   const negativeThemes = themesFor(stats.reviews, "negative", brand, 3);
   const buckets = bucketTable(stats.reviews);
 
+  const rawInsights = getAllInsights();
+  const brandInsights = rawInsights.insights
+    .filter((ins) => {
+      const sku = skuById(ins.skuId);
+      return sku && sku.brand.toLowerCase() === brand.toLowerCase();
+    })
+    .map((ins) => {
+      const sku = skuById(ins.skuId);
+      const skuReviews = reviewsForSku(reviews, ins.skuId);
+      const { isStale } = getSkuInsight(ins.skuId, skuReviews);
+      return {
+        ...ins,
+        skuName: sku ? sku.name : ins.skuId,
+        brand: sku ? sku.brand : brand,
+        isStale,
+      };
+    });
+
   return (
     <div className="space-y-6">
       <div>
@@ -72,6 +93,12 @@ export default async function BrandPage({
           note={`Ranked on verified average across the ${stats.rankedFrom} SKUs with enough verified reviews to rank.`}
         />
       </div>
+
+      <ExecutiveBriefing
+        insights={brandInsights}
+        model={rawInsights.model}
+        generatedAt={rawInsights.generatedAt}
+      />
 
       <div className="grid gap-5 lg:grid-cols-2">
         <Panel

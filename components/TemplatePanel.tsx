@@ -17,21 +17,46 @@ export function TemplatePanel() {
          * handler, so client-side routing and prefetching are exactly what we
          * do not want.
          */
-        <div className="flex shrink-0 gap-2">
-          <a
-            download
-            href="/api/template?format=xlsx"
-            className="rounded-md bg-teal px-3.5 py-2 text-[12px] font-semibold text-white transition hover:bg-[color:var(--color-teal-bright)]"
-          >
-            Download .xlsx
-          </a>
-          <a
-            download
-            href="/api/template?format=csv"
-            className="rounded-md border border-line px-3.5 py-2 text-[12px] font-semibold text-ink transition hover:border-teal hover:text-teal"
-          >
-            .csv
-          </a>
+        <div className="flex flex-wrap shrink-0 items-center gap-2">
+          <div className="flex items-center gap-1.5 rounded-md border border-line bg-surface p-1">
+            <span className="px-2 text-[11px] font-medium text-ink-60">Blank:</span>
+            <a
+              download
+              href="/api/template?format=xlsx&blank=1"
+              className="rounded bg-teal px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-[color:var(--color-teal-bright)]"
+              title="Clean spreadsheet with headers only, ready to paste data into"
+            >
+              .xlsx
+            </a>
+            <a
+              download
+              href="/api/template?format=csv&blank=1"
+              className="rounded border border-line bg-white px-2.5 py-1 text-[11px] font-semibold text-ink transition hover:border-teal hover:text-teal"
+              title="Clean CSV with headers only, ready to paste data into"
+            >
+              .csv
+            </a>
+          </div>
+
+          <div className="flex items-center gap-1.5 rounded-md border border-line bg-surface p-1">
+            <span className="px-2 text-[11px] font-medium text-ink-60">Sample:</span>
+            <a
+              download
+              href="/api/template?format=xlsx"
+              className="rounded border border-line bg-white px-2.5 py-1 text-[11px] font-semibold text-ink transition hover:border-teal hover:text-teal"
+              title="Spreadsheet with example rows and product guide"
+            >
+              .xlsx
+            </a>
+            <a
+              download
+              href="/api/template?format=csv"
+              className="rounded border border-line bg-white px-2.5 py-1 text-[11px] font-semibold text-ink transition hover:border-teal hover:text-teal"
+              title="CSV with example rows"
+            >
+              .csv
+            </a>
+          </div>
         </div>
       }
     >

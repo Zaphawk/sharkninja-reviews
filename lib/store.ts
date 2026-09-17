@@ -1,5 +1,6 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
+import { DatabaseSync } from "node:sqlite";
 import seed from "../data/seed.json";
 import type { Bucket, IngestReport, Review } from "./types";
 
@@ -13,14 +14,14 @@ export type ImportRecord = {
 export class ReadOnlyStoreError extends Error {
   constructor() {
     super(
-      "This deployment has no database, so it is showing a bundled snapshot and cannot accept new data. Set DATABASE_URL to a Postgres connection string to enable imports.",
+      "This deployment has no database, so it is showing a bundled snapshot and cannot accept new data. Set DATABASE_URL to a Postgres connection string or use SQLite to enable imports.",
     );
     this.name = "ReadOnlyStoreError";
   }
 }
 
 export interface Store {
-  kind: "postgres" | "file" | "snapshot";
+  kind: "postgres" | "sqlite" | "file" | "snapshot";
   init(): Promise<void>;
   insertReviews(
     rows: Review[],
@@ -250,15 +251,266 @@ function fileStore(path: string): Store {
   };
 }
 
+/* ------------------------------------------------------------------ sqlite */
+
+const SQLITE_SCHEMA = `
+create table if not exists reviews (
+  hash        text primary key,
+  sku_id      text        not null,
+  reviewer    text        not null,
+  rating      integer     not null,
+  title       text        not null,
+  body        text        not null,
+  review_date text        not null,
+  verified    integer     not null,
+  country     text        not null,
+  variant     text,
+  buckets     text        not null default '[]',
+  import_id   text        not null,
+  created_at  text        not null default CURRENT_TIMESTAMP
+);
+create index if not exists reviews_sku_idx  on reviews (sku_id);
+create index if not exists reviews_date_idx on reviews (review_date);
+
+create table if not exists imports (
+  id         text primary key,
+  filename   text        not null,
+  created_at text        not null default CURRENT_TIMESTAMP,
+  report     text        not null
+);
+`;
+
+export function sqliteStore(dbPath: string): Store {
+  let db: DatabaseSync | null = null;
+
+  async function getDb(): Promise<DatabaseSync> {
+    if (!db) {
+      if (dbPath !== ":memory:") {
+        await mkdir(dirname(dbPath), { recursive: true });
+      }
+      db = new DatabaseSync(dbPath);
+    }
+    return db;
+  }
+
+  return {
+    kind: "sqlite",
+    async init() {
+      const s = await getDb();
+      s.exec(SQLITE_SCHEMA);
+
+      const countResult = s.prepare("select count(*) as c from reviews").get() as { c: number };
+      if (countResult.c === 0) {
+        let initialReviews: Review[] = [];
+        let initialImports: ImportRecord[] = [];
+
+        const jsonStorePath = join(process.cwd(), ".data", "store.json");
+        try {
+          const raw = await readFile(jsonStorePath, "utf8");
+          const parsed = JSON.parse(raw) as { reviews?: Review[]; imports?: ImportRecord[] };
+          if (Array.isArray(parsed.reviews) && parsed.reviews.length > 0) {
+            initialReviews = parsed.reviews;
+            initialImports = parsed.imports ?? [];
+          }
+        } catch {
+          // No store.json found or invalid
+        }
+
+        if (initialReviews.length === 0) {
+          initialReviews = (seed.reviews as unknown as Review[]) ?? [];
+        }
+
+        if (initialReviews.length > 0) {
+          const insertStmt = s.prepare(`
+            insert or ignore into reviews (
+              hash, sku_id, reviewer, rating, title, body, review_date,
+              verified, country, variant, buckets, import_id
+            ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `);
+
+          s.exec("begin transaction");
+          try {
+            for (const r of initialReviews) {
+              insertStmt.run(
+                r.hash,
+                r.skuId,
+                r.reviewer,
+                r.rating,
+                r.title,
+                r.body,
+                r.reviewDate,
+                r.verified ? 1 : 0,
+                r.country,
+                r.variant ?? null,
+                JSON.stringify(r.buckets ?? []),
+                "seed-import",
+              );
+            }
+            s.exec("commit");
+          } catch (e) {
+            s.exec("rollback");
+            throw e;
+          }
+        }
+
+        if (initialImports.length > 0) {
+          const insertImp = s.prepare(`
+            insert or ignore into imports (id, filename, created_at, report)
+            values (?, ?, ?, ?)
+          `);
+          s.exec("begin transaction");
+          try {
+            for (const imp of initialImports) {
+              insertImp.run(
+                imp.id,
+                imp.filename,
+                imp.createdAt,
+                JSON.stringify(imp.report),
+              );
+            }
+            s.exec("commit");
+          } catch (e) {
+            s.exec("rollback");
+            throw e;
+          }
+        }
+      }
+    },
+    async insertReviews(rows, importId) {
+      if (rows.length === 0) return { inserted: 0, duplicates: 0 };
+      const s = await getDb();
+      const insertStmt = s.prepare(`
+        insert or ignore into reviews (
+          hash, sku_id, reviewer, rating, title, body, review_date,
+          verified, country, variant, buckets, import_id
+        ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+
+      let inserted = 0;
+      s.exec("begin transaction");
+      try {
+        for (const r of rows) {
+          const res = insertStmt.run(
+            r.hash,
+            r.skuId,
+            r.reviewer,
+            r.rating,
+            r.title,
+            r.body,
+            r.reviewDate,
+            r.verified ? 1 : 0,
+            r.country,
+            r.variant ?? null,
+            JSON.stringify(r.buckets ?? []),
+            importId,
+          );
+          if (res.changes > 0) inserted++;
+        }
+        s.exec("commit");
+      } catch (e) {
+        s.exec("rollback");
+        throw e;
+      }
+
+      return {
+        inserted,
+        duplicates: rows.length - inserted,
+      };
+    },
+    async allReviews() {
+      const s = await getDb();
+      const rows = s.prepare(`
+        select hash, sku_id, reviewer, rating, title, body, review_date,
+               verified, country, variant, buckets
+        from reviews
+        order by review_date desc
+      `).all() as Array<{
+        hash: string;
+        sku_id: string;
+        reviewer: string;
+        rating: number;
+        title: string;
+        body: string;
+        review_date: string;
+        verified: number;
+        country: string;
+        variant: string | null;
+        buckets: string;
+      }>;
+
+      return rows.map((r) => ({
+        hash: r.hash,
+        skuId: r.sku_id,
+        reviewer: r.reviewer,
+        rating: r.rating,
+        title: r.title,
+        body: r.body,
+        reviewDate: r.review_date,
+        verified: Boolean(r.verified),
+        country: r.country,
+        variant: r.variant,
+        buckets: (r.buckets ? JSON.parse(r.buckets) : []) as Bucket[],
+      }));
+    },
+    async setBuckets(updates) {
+      if (updates.length === 0) return 0;
+      const s = await getDb();
+      const stmt = s.prepare("update reviews set buckets = ? where hash = ?");
+      let n = 0;
+      s.exec("begin transaction");
+      try {
+        for (const u of updates) {
+          const res = stmt.run(JSON.stringify(u.buckets), u.hash);
+          if (res.changes > 0) n++;
+        }
+        s.exec("commit");
+      } catch (e) {
+        s.exec("rollback");
+        throw e;
+      }
+      return n;
+    },
+    async recordImport(rec) {
+      const s = await getDb();
+      const stmt = s.prepare(`
+        insert into imports (id, filename, created_at, report)
+        values (?, ?, ?, ?)
+        on conflict (id) do update set report = excluded.report
+      `);
+      stmt.run(rec.id, rec.filename, rec.createdAt, JSON.stringify(rec.report));
+    },
+    async listImports() {
+      const s = await getDb();
+      const rows = s.prepare(`
+        select id, filename, created_at, report
+        from imports
+        order by created_at desc
+        limit 50
+      `).all() as Array<{
+        id: string;
+        filename: string;
+        created_at: string;
+        report: string;
+      }>;
+
+      return rows.map((r) => ({
+        id: r.id,
+        filename: r.filename,
+        createdAt: r.created_at,
+        report: JSON.parse(r.report) as IngestReport,
+      }));
+    },
+    async clear() {
+      const s = await getDb();
+      s.exec("delete from reviews; delete from imports;");
+    },
+  };
+}
+
 /* ------------------------------------------------------------------ snapshot */
 
 /**
- * What a deployment falls back to when no DATABASE_URL is configured.
- *
- * Vercel's filesystem is read-only, so the file store cannot run there at all.
- * Rather than serve an empty dashboard, we serve the export baked in at build
- * time by scripts/build-seed.ts — the whole thing works and is honest about
- * being a snapshot. Imports are refused with an explanation rather than a 500.
+ * What a deployment falls back to when explicit snapshot mode is selected.
  */
 function snapshotStore(): Store {
   const reviews = (seed.reviews as unknown as Review[])
@@ -295,18 +547,49 @@ export const snapshotGeneratedAt = seed.generatedAt as string;
 
 let cached: Store | null = null;
 
+export function resetStoreCacheForTesting(): void {
+  cached = null;
+}
+
 export function getStore(): Store {
   if (cached) return cached;
   const url = process.env.DATABASE_URL;
-  if (url) {
+
+  if (url && (url.startsWith("postgres://") || url.startsWith("postgresql://"))) {
     cached = postgresStore(url);
-  } else if (process.env.VERCEL) {
+  } else if (url && (url.startsWith("sqlite:") || url.startsWith("file:"))) {
+    const p = url.replace(/^(sqlite:|file:)\/\//, "").replace(/^(sqlite:|file:)/, "");
+    cached = sqliteStore(p);
+  } else if (process.env.SQLITE_PATH) {
+    cached = sqliteStore(process.env.SQLITE_PATH);
+  } else if (process.env.STORE_MODE === "snapshot") {
     cached = snapshotStore();
-  } else {
+  } else if (process.env.STORE_MODE === "file") {
     cached = fileStore(join(process.cwd(), ".data", "store.json"));
+  } else if (process.env.VERCEL) {
+    // Ephemeral SQLite in /tmp for Vercel demo/preview deployments so import is unblocked!
+    cached = sqliteStore("/tmp/reviews.sqlite");
+  } else {
+    // Default: SQLite in .data/reviews.sqlite
+    cached = sqliteStore(join(process.cwd(), ".data", "reviews.sqlite"));
   }
   return cached;
 }
 
 /** True when the dashboard is serving the baked-in snapshot, not live data. */
 export const usingSnapshot = () => getStore().kind === "snapshot";
+export const storeKind = () => getStore().kind;
+
+export function getStoreDescription(): string {
+  const store = getStore();
+  switch (store.kind) {
+    case "postgres":
+      return "PostgreSQL (Neon)";
+    case "sqlite":
+      return "SQLite Database";
+    case "file":
+      return "Local File Store (.data/store.json)";
+    case "snapshot":
+      return "Read-only Snapshot";
+  }
+}

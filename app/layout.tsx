@@ -26,6 +26,14 @@ export default function RootLayout({
               <Link href="/" className="text-ink-60 hover:text-ink">
                 Dashboard
               </Link>
+              <a
+                download
+                href="/api/template?format=xlsx&blank=1"
+                className="text-ink-60 hover:text-ink"
+                title="Download blank Excel import template"
+              >
+                Template
+              </a>
               <Link href="/upload" className="text-ink-60 hover:text-ink">
                 Import data
               </Link>

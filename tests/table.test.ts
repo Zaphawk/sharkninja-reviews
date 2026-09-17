@@ -130,6 +130,16 @@ describe("the model template", () => {
     assert.equal(out.reviews.length, 2);
   });
 
+  it("hands out a clean blank template with headers only", () => {
+    const csv = templateCsv({ blank: true });
+    const outCsv = parseWorkbook(Buffer.from(csv, "utf8"));
+    assert.equal(outCsv.reviews.length, 0);
+
+    const wb = templateWorkbook({ blank: true });
+    const outWb = parseWorkbook(wb);
+    assert.equal(outWb.reviews.length, 0);
+  });
+
   it("documents every column it accepts", () => {
     for (const c of TEMPLATE_COLUMNS) {
       assert.ok(c.note.length > 20, `${c.label} has no explanation`);
