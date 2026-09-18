@@ -4,7 +4,6 @@ import { loadReviews } from "@/lib/data";
 import { getStore, getStoreDescription, usingSnapshot } from "@/lib/store";
 import { dateRange } from "@/lib/aggregate";
 import { Panel } from "@/components/Stat";
-import { TemplatePanel } from "@/components/TemplatePanel";
 
 export const dynamic = "force-dynamic";
 
@@ -23,9 +22,8 @@ export default async function UploadPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Import data</h1>
         <p className="mt-1 max-w-2xl text-[13px] leading-snug text-ink-60">
-          Drop in an Excel file or a CSV and the dashboard fills itself in. The
-          template below is the shape to aim for; the older workbooks, one
-          pasted sheet per SKU, still import exactly as before.
+          Drop your review workbook or paste reviews directly from Amazon.
+          Duplicates are skipped automatically, so re-importing is always safe.
         </p>
       </div>
 
@@ -45,8 +43,6 @@ export default async function UploadPage() {
       ) : null}
 
       <UploadForm />
-
-      <TemplatePanel />
 
       <Panel
         title="What is loaded"

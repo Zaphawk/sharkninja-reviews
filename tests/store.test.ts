@@ -185,3 +185,25 @@ describe("sqliteStore Store interface implementation", () => {
   });
 });
 
+describe("direct text paste ingest", () => {
+  it("ingests raw pasted text for a SKU", async () => {
+    const { ingestText } = await import("../lib/ingest");
+    const rawText = [
+      "Shepali",
+      "5.0 out of 5 stars Good Product 👍",
+      "Reviewed in India on 12 June 2026",
+      "Colour: Cranberrry RedVerified Purchase",
+      "This blender is really good for on the go shakes, smoothies.",
+      "Helpful",
+      "Report",
+    ].join("\n");
+
+    const report = await ingestText("ninja-blast", rawText, "Test Paste");
+    assert.equal(report.parsed, 1);
+    assert.equal(report.filename, "Test Paste");
+    assert.equal(report.perSku.length, 1);
+    assert.equal(report.perSku[0].skuId, "ninja-blast");
+    assert.equal(report.perSku[0].parsed, 1);
+  });
+});
+

@@ -89,7 +89,7 @@ Rules:
    - "critical": Severe product flaws, collapsing ratings, deceptive claims, or unviable returns endangering brand equity.
    - "warning": Notable friction in product quality, unfulfilled feature claims, or service gaps that require active remediation.
    - "watch": Rating is holding or mixed, but specific vulnerability (e.g. localized floor suitability, noisy fans, small sample size volatility) must be monitored.
-   - "healthy": Consistent praise, reliable customer satisfaction, low complaint volume.
+   - "healthy": Consistent praise, reliable customer satisfaction, low complaint volume. ANY SKU with average rating below 4.00 (verified or overall) or negative review rate >= 12% MUST NEVER be classified as healthy.
    - "unknown": Too few verified reviews (<5) to draw any credible conclusion without speculation.
 2. Voice and Style:
    - Concise, disciplined, and commercially grounded.

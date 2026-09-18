@@ -44,9 +44,9 @@ export default async function Home() {
   const enrichedInsights = rawInsights.insights.map((ins) => {
     const sku = skuById(ins.skuId);
     const skuReviews = reviewsForSku(reviews, ins.skuId);
-    const { isStale } = getSkuInsight(ins.skuId, skuReviews);
+    const { isStale, insight } = getSkuInsight(ins.skuId, skuReviews);
     return {
-      ...ins,
+      ...(insight ?? ins),
       skuName: sku ? sku.name : ins.skuId,
       brand: sku ? sku.brand : "Unknown",
       isStale,

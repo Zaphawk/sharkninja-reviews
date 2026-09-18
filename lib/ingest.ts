@@ -1,10 +1,11 @@
 import { randomUUID } from "node:crypto";
 import { classifyReview } from "./classify";
 import { reviewHash } from "./hash";
+import { parseSheet } from "./parse/records";
 import { parseWorkbook } from "./parse/workbook";
 import { skuById } from "./skus";
 import { getStore } from "./store";
-import type { IngestReport, ParsedReview, Review } from "./types";
+import type { IngestReport, ParsedReview, Review, SkippedRow } from "./types";
 import { validate } from "./validate";
 
 export function toReviews(parsed: ParsedReview[]): Review[] {
@@ -33,27 +34,24 @@ export class UnmappedSheetsError extends Error {
   }
 }
 
-/**
- * One path in, whether the bytes came from someone dragging a file onto the
- * upload page or from a scheduled scraper POSTing a workbook. Parse, check,
- * hash, classify, insert, report.
- */
-export async function ingestBuffer(
-  buf: Buffer,
-  filename: string,
-): Promise<IngestReport> {
-  const parsedWb = parseWorkbook(buf);
+async function commitParsedReviews({
+  parsedReviews,
+  rowsRead,
+  sheetsRead,
+  filename,
+  unmappedSheets = [],
+  skippedRows = [],
+}: {
+  parsedReviews: ParsedReview[];
+  rowsRead: number;
+  sheetsRead: number;
+  filename: string;
+  unmappedSheets?: string[];
+  skippedRows?: SkippedRow[];
+}): Promise<IngestReport> {
+  const reviews = toReviews(parsedReviews);
 
-  // Checked before the store is touched: a refused import must leave nothing
-  // behind.
-  if (parsedWb.unmappedSheets.length > 0) {
-    throw new UnmappedSheetsError(parsedWb.unmappedSheets, filename);
-  }
-
-  const reviews = toReviews(parsedWb.reviews);
-
-  // Collapse duplicates inside a single file before touching the store: the
-  // September export has blocks pasted twice inside the Steam & Scrub sheet.
+  // Collapse duplicates inside a single batch before touching the store
   const unique = new Map<string, Review>();
   for (const r of reviews) if (!unique.has(r.hash)) unique.set(r.hash, r);
   const deduped = [...unique.values()];
@@ -69,22 +67,22 @@ export async function ingestBuffer(
   const importId = randomUUID();
   const { inserted, duplicates } = await store.insertReviews(deduped, importId);
 
-  const perSku = perSkuRows(parsedWb.reviews, deduped, existing);
+  const perSku = perSkuRows(parsedReviews, deduped, existing);
   const dates = deduped.map((r) => r.reviewDate).sort();
 
   const report: IngestReport = {
     filename,
-    sheetsRead: parsedWb.sheets.length,
-    rowsRead: parsedWb.rowsRead,
+    sheetsRead,
+    rowsRead,
     parsed: reviews.length,
     inserted,
     duplicates: duplicates + withinFileDuplicates,
-    unmappedSheets: parsedWb.unmappedSheets,
-    skippedRows: parsedWb.skippedRows,
+    unmappedSheets,
+    skippedRows,
     perSku,
     dateRange:
       dates.length > 0 ? { from: dates[0], to: dates[dates.length - 1] } : null,
-    warnings: validate(deduped, withinFileDuplicates, parsedWb.skippedRows),
+    warnings: validate(deduped, withinFileDuplicates, skippedRows),
   };
 
   await store.recordImport({
@@ -95,6 +93,49 @@ export async function ingestBuffer(
   });
 
   return report;
+}
+
+/**
+ * One path in for binary workbooks or CSV files.
+ */
+export async function ingestBuffer(
+  buf: Buffer,
+  filename: string,
+): Promise<IngestReport> {
+  const parsedWb = parseWorkbook(buf);
+
+  // Checked before the store is touched: a refused import must leave nothing behind.
+  if (parsedWb.unmappedSheets.length > 0) {
+    throw new UnmappedSheetsError(parsedWb.unmappedSheets, filename);
+  }
+
+  return commitParsedReviews({
+    parsedReviews: parsedWb.reviews,
+    rowsRead: parsedWb.rowsRead,
+    sheetsRead: parsedWb.sheets.length,
+    filename,
+    unmappedSheets: parsedWb.unmappedSheets,
+    skippedRows: parsedWb.skippedRows,
+  });
+}
+
+/**
+ * Ingest raw review text pasted directly from Amazon for a chosen SKU.
+ */
+export async function ingestText(
+  skuId: string,
+  text: string,
+  filename = "Pasted reviews",
+): Promise<IngestReport> {
+  const lines = text.split(/\r?\n/);
+  const parsed = parseSheet(skuId, lines);
+
+  return commitParsedReviews({
+    parsedReviews: parsed,
+    rowsRead: lines.length,
+    sheetsRead: 1,
+    filename,
+  });
 }
 
 /**

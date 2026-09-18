@@ -4,60 +4,59 @@
   "insights": [
     {
       "skuId": "ninja-blast",
-      "tone": "healthy",
-      "headline": "High consumer satisfaction driven by daily blending convenience and portability, with isolated motor fatigue reports.",
+      "tone": "critical",
+      "headline": "Motor durability failures and blade jams depress rating to 3.09★, creating elevated return risk.",
       "body": [
-        "The Ninja Blast is currently Ninja India's highest-volume listing with 85 verified reviews and a 4.44 verified average. Buyers consistently cite ease of use, compact form factor, and dependable battery endurance for single-serve smoothies.",
-        "Negative feedback represents only 8% of all reviews, primarily concentrated in hardware complaints where blades become lodged on dense frozen ingredients or charging fails after several months of use. Marketplace and packaging complaints remain negligible."
+        "The Ninja Blast is Ninja India's highest-volume portable listing with 59 reviews, but customer sentiment is depressed by a 3.09 verified purchase average and a 42% negative review rate. While buyers value its compact cordless design for soft smoothies, durability under daily kitchen usage has triggered substantial negative feedback.",
+        "Product hardware defects represent 84% of customer complaints: buyers report units shutting down completely within weeks ('stopped working', 'defective piece'), blade jamming on ice cubes, and battery charging failures. After-sales customer service friction and replacement delays exacerbate the low score."
       ],
-      "soWhat": "A reliable gateway appliance that builds trust in Ninja's motor engineering. Low warranty and return friction protect gross margin.",
-      "watch": "Track long-term battery retention complaints and blade replacement accessory requests on Amazon.",
+      "soWhat": "A 3.09★ average suppresses Amazon organic rank and converts poorly against competing blenders. High motor and battery defect rates risk return spikes and damage brand equity for Ninja's motor engineering in India.",
+      "watch": "Track 30-day motor failure rate and battery longevity; update product listing with explicit liquid-to-ice guidelines to reduce blade jamming.",
       "evidence": [
-        "85 verified reviews with a 4.44 verified star rating",
-        "82% positive reviews and only 8% negative reviews",
-        "6 out of 8 negative reviews cite product hardware issues"
+        "57 verified reviews averaging 3.09 stars",
+        "42% negative review rate among verified purchasers",
+        "84% of negative reviews cite motor failure, defective units, or blade jams"
       ],
-      "dataHash": "c37718b0f113bfe1",
-      "generatedAt": "2026-09-08T11:15:00.000Z",
+      "dataHash": "ddcc9cc2fbd5c87e",
+      "generatedAt": "2026-09-18T11:15:00.000Z",
       "model": "openrouter/anthropic/claude-3.5-sonnet"
     },
     {
       "skuId": "ninja-combi",
-      "tone": "healthy",
-      "headline": "Flagship multi-cooker performance with exceptional retention and praise for rapid, multi-element meal preparation.",
+      "tone": "warning",
+      "headline": "Strong multi-cook concept dragged below 4.00 overall by 24% negative reviews citing build defects and replacement friction.",
       "body": [
-        "The Ninja Combi holds a 4.62 verified rating across 42 verified purchases, representing the highest customer satisfaction among high-ticket kitchen appliances. Reviewers praise its ability to steam and air fry simultaneously, significantly reducing weekday cooking times.",
-        "Complaints are minimal at 8% total, centered almost exclusively on the substantial countertop footprint and initial learning curve for mode transitions. No recurring component failure pattern is observed."
+        "The Ninja Combi records a 4.02 verified purchase average across 65 verified reviews, but overall sentiment across all 72 reviews dips to 3.88. Satisfied buyers praise its combined steam-and-air-fry technology for fast weekday dinners and meal variety.",
+        "However, 24% of all reviews are 1 or 2 stars. Buyers complain of receiving scratched or repacked units, perceive the exterior finish as cheap relative to the premium price, and express acute frustration over unresponsive after-sales support when requesting replacements."
       ],
-      "soWhat": "Acts as an effective halo product justifying premium positioning above standard domestic air fryers.",
-      "watch": "Monitor recipe and localization inquiries; Indian vegetarian multi-tier cooking recipes will accelerate referral sales.",
+      "soWhat": "A sub-4.00 overall rating (3.88★) depresses Amazon search rank and brand perception for Ninja's premium cooking range in India.",
+      "watch": "Tighten fulfillment inspection on Amazon to prevent repacked or scratched items reaching buyers, and establish a dedicated replacement hotline.",
       "evidence": [
-        "4.62 verified average across 42 verified purchases",
-        "88% positive sentiment across all 49 customer reviews",
-        "Only 4 negative reviews recorded in the entire dataset"
+        "4.02 verified average across 65 purchases (3.88 overall across 72 reviews)",
+        "24% negative review rate across all customer submissions",
+        "Top complaint drivers: damaged/used delivery condition and replacement refusal"
       ],
-      "dataHash": "68f4418eee6e1753",
-      "generatedAt": "2026-09-08T11:15:00.000Z",
+      "dataHash": "1d9f3ddd4b5f01ad",
+      "generatedAt": "2026-09-18T11:15:00.000Z",
       "model": "openrouter/anthropic/claude-3.5-sonnet"
     },
     {
       "skuId": "ninja-air-fryer-6-2l",
-      "tone": "healthy",
-      "headline": "Solid core revenue driver with high capacity ratings, though price-to-feature comparisons against local brands persist.",
+      "tone": "warning",
+      "headline": "Volume driver slips to 3.86★ overall as 25% negative reviews flag poor customer service and transit damage.",
       "body": [
-        "Generating 56 verified reviews with a 4.48 verified average, the 6.2L Air Fryer satisfies Indian family meal portion demands. The non-stick crisper plate and even convection circulation receive repeated praise in verified purchase reviews.",
-        "Negative reviews (11%) largely dispute price premium versus Philips and domestic alternatives, alongside brief mentions of initial heating element smell during first-time burn-in.",
-        "Rating trend remains stable between 4.3 and 4.6 over consecutive quarters."
+        "With 81 verified reviews averaging 3.93 stars (3.86 overall across 83 reviews), the 6.2L Air Fryer fails to clear the 4.00 commercial health threshold despite strong capacity and crispy basket performance praised by satisfied buyers.",
+        "One in four reviews (25%) is negative. Dissatisfied customers cite unhelpful customer service ('worst service', refusal of replacements for broken parts), units arriving damaged in transit, and doubts over whether build quality justifies the 10,000+ INR price tag against established domestic alternatives."
       ],
-      "soWhat": "Key volume defender against incumbent kitchen brands. Consistent ratings preserve Buy Box dominance.",
-      "watch": "Price promotion elasticity against competing 6L domestic models on festival sales.",
+      "soWhat": "Sub-4.00 ratings in the fiercely contested Indian air fryer category severely reduce conversion against Philips and Havells.",
+      "watch": "Improve transit packaging to stop plastic breakage upon arrival and reduce warranty turnaround times.",
       "evidence": [
-        "4.48 verified rating with 56 verified reviews",
-        "84% positive review share",
-        "5 of 8 negative reviews address product expectations or pricing"
+        "3.93 verified rating across 81 verified reviews (3.86 overall)",
+        "25% negative review rate (21 negative reviews)",
+        "Key complaint themes: unresponsive customer service and transit breakage"
       ],
-      "dataHash": "ae339a49056d6083",
-      "generatedAt": "2026-09-08T11:15:00.000Z",
+      "dataHash": "285c0193225d5262",
+      "generatedAt": "2026-09-18T11:15:00.000Z",
       "model": "openrouter/anthropic/claude-3.5-sonnet"
     },
     {
@@ -75,7 +74,7 @@
         "33% negative rating share",
         "100% of negative reviews flag marketplace or delivery transit issues"
       ],
-      "dataHash": "5d4c298d2a04726e",
+      "dataHash": "78280b5e2b9e76ad",
       "generatedAt": "2026-09-08T11:15:00.000Z",
       "model": "openrouter/anthropic/claude-3.5-sonnet"
     },

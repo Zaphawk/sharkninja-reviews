@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import seed from "../data/seed.json";
-import { getAllInsights, getSkuInsight } from "../lib/insights";
+import { deriveTone, getAllInsights, getSkuInsight } from "../lib/insights";
 import { skuDataHash } from "../lib/insights/hash";
 import { SKUS } from "../lib/skus";
 import type { Review } from "../lib/types";
@@ -59,5 +59,51 @@ test("insights system", async (t) => {
     };
     const { isStale } = getSkuInsight("shark-flex-breeze", [...mine, fakeReview]);
     assert.equal(isStale, true);
+  });
+
+  await t.test("deriveTone enforces sub-4.00 rule and honest severity thresholds", () => {
+    const makeReviews = (ratings: number[], verified = true): Review[] =>
+      ratings.map((r, i) => ({
+        hash: `hash-${i}`,
+        skuId: "test-sku",
+        reviewer: `Reviewer ${i}`,
+        rating: r,
+        title: "Test title",
+        body: "Test review body content",
+        reviewDate: "2026-09-01",
+        verified,
+        country: "India",
+        variant: null,
+        buckets: [],
+      }));
+
+    // Sub-4.00 rating must never be healthy
+    const sub4Verified = makeReviews([3, 3, 3, 4, 4, 4, 4, 4, 4, 4]); // avg 3.7
+    assert.notEqual(deriveTone(sub4Verified), "healthy");
+    assert.equal(deriveTone(sub4Verified), "warning");
+
+    const sub4Overall = [
+      ...makeReviews([4, 4, 4, 4, 4, 4, 4, 4, 4, 4], true), // 10 x 4 = 4.0
+      ...makeReviews([1, 1, 1], false), // drags overall to 3.3
+    ];
+    assert.notEqual(deriveTone(sub4Overall), "healthy");
+
+    // Critical thresholds
+    const criticalRating = makeReviews([2, 3, 3, 3, 3, 3, 3, 3, 3, 3]); // avg 2.9
+    assert.equal(deriveTone(criticalRating), "critical");
+
+    const highNegatives = makeReviews([5, 5, 5, 5, 5, 5, 1, 1, 1, 1]); // 40% neg
+    assert.equal(deriveTone(highNegatives), "critical");
+
+    // Low volume thresholds
+    const lowVolume = makeReviews([5, 5, 5]);
+    assert.equal(deriveTone(lowVolume), "unknown");
+
+    const mediumVolume = makeReviews([5, 5, 5, 5, 5, 5]);
+    assert.equal(deriveTone(mediumVolume), "watch");
+
+    // Truly healthy
+    const healthyReviews = makeReviews([5, 5, 5, 5, 5, 4, 4, 4, 4, 4, 5, 5]); // avg 4.5, 0% neg, n=12
+    assert.equal(deriveTone(healthyReviews), "healthy");
   });
 });

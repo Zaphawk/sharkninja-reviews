@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { ingestBuffer, UnmappedSheetsError } from "@/lib/ingest";
+import { revalidatePath } from "next/cache";
+import { ingestBuffer, ingestText, UnmappedSheetsError } from "@/lib/ingest";
 import { ReadOnlyStoreError } from "@/lib/store";
 
 export const runtime = "nodejs";
@@ -8,9 +9,8 @@ export const maxDuration = 60;
 const ACCEPTED = /\.(xlsx|xlsm|xls|csv)$/i;
 
 /**
- * Accepts either a multipart upload (the page's own form) or a JSON body with
- * a base64 file (how a scheduled scraper will call it). Excel or CSV, same
- * pipeline either way.
+ * Accepts multipart uploads (file drop), JSON with direct pasted review text
+ * { skuId, text }, or JSON with base64 file buffer.
  */
 export async function POST(req: Request) {
   try {
@@ -31,10 +31,30 @@ export async function POST(req: Request) {
       const body = (await req.json()) as {
         filename?: string;
         base64?: string;
+        skuId?: string;
+        text?: string;
       };
+
+      if (body.skuId && typeof body.text === "string") {
+        if (!body.text.trim()) {
+          return NextResponse.json(
+            { error: "No review text provided to import." },
+            { status: 400 },
+          );
+        }
+        const report = await ingestText(
+          body.skuId,
+          body.text,
+          body.filename ?? "Pasted reviews",
+        );
+        revalidatePath("/", "layout");
+        revalidatePath("/upload");
+        return NextResponse.json({ ok: true, reports: [report] });
+      }
+
       if (!body.base64) {
         return NextResponse.json(
-          { error: "Send multipart 'file' fields, or JSON { filename, base64 }." },
+          { error: "Send multipart 'file' fields, JSON { skuId, text }, or JSON { filename, base64 }." },
           { status: 400 },
         );
       }
@@ -52,7 +72,7 @@ export async function POST(req: Request) {
     if (wrongType.length > 0) {
       return NextResponse.json(
         {
-          error: `${wrongType.map((f) => f.name).join(", ")} is not a spreadsheet. Send .xlsx, .xls or .csv — the model template is at /api/template.`,
+          error: `${wrongType.map((f) => f.name).join(", ")} is not a spreadsheet. Send .xlsx, .xls or .csv.`,
         },
         { status: 415 },
       );
@@ -62,6 +82,9 @@ export async function POST(req: Request) {
     for (const f of files) {
       reports.push(await ingestBuffer(f.buf, f.name));
     }
+
+    revalidatePath("/", "layout");
+    revalidatePath("/upload");
 
     return NextResponse.json({ ok: true, reports });
   } catch (err) {
