@@ -106,4 +106,51 @@ test("insights system", async (t) => {
     const healthyReviews = makeReviews([5, 5, 5, 5, 5, 4, 4, 4, 4, 4, 5, 5]); // avg 4.5, 0% neg, n=12
     assert.equal(deriveTone(healthyReviews), "healthy");
   });
+
+  await t.test("deriveTone exact boundary conditions", () => {
+    const make = (ratings: number[], verified = true): Review[] =>
+      ratings.map((r, i) => ({
+        hash: `bound-hash-${i}`,
+        skuId: "test-boundary",
+        reviewer: `Reviewer ${i}`,
+        rating: r,
+        title: "Title",
+        body: "Body",
+        reviewDate: "2026-09-01",
+        verified,
+        country: "India",
+        variant: null,
+        buckets: [],
+      }));
+
+    // Exact volume boundaries
+    assert.equal(deriveTone(make([5, 5, 5, 5])), "unknown"); // n = 4
+    assert.equal(deriveTone(make([5, 5, 5, 5, 5])), "watch"); // n = 5
+    assert.equal(deriveTone(make([5, 5, 5, 5, 5, 5, 5, 5, 5])), "watch"); // n = 9
+    assert.equal(deriveTone(make([5, 5, 5, 5, 5, 5, 5, 5, 5, 5])), "healthy"); // n = 10
+
+    // Exact rating thresholds (with n=10, 0% negatives)
+    // Exactly 4.00 vs 3.90
+    assert.equal(deriveTone(make([4, 4, 4, 4, 4, 4, 4, 4, 4, 4])), "healthy"); // avg 4.00
+    assert.equal(deriveTone(make([3, 4, 4, 4, 4, 4, 4, 4, 4, 4])), "watch"); // avg 3.90
+
+    // Exactly 3.80 vs 3.70
+    assert.equal(deriveTone(make([3, 3, 4, 4, 4, 4, 4, 4, 4, 4])), "watch"); // avg 3.80
+    assert.equal(deriveTone(make([3, 3, 3, 4, 4, 4, 4, 4, 4, 4])), "warning"); // avg 3.70
+
+    // Exactly 3.40 vs 3.30
+    assert.equal(deriveTone(make([3, 3, 3, 3, 3, 3, 4, 4, 4, 4])), "warning"); // avg 3.40
+    assert.equal(deriveTone(make([3, 3, 3, 3, 3, 3, 3, 4, 4, 4])), "critical"); // avg 3.30
+
+    // Exact negative percentage boundaries (using 100 reviews to test clean integer percentages)
+    const makeWithNeg = (negCount: number): Review[] => [
+      ...make(Array(negCount).fill(1)),
+      ...make(Array(100 - negCount).fill(5)),
+    ];
+
+    assert.equal(deriveTone(makeWithNeg(11)), "healthy"); // 11% neg (< 12%)
+    assert.equal(deriveTone(makeWithNeg(12)), "watch"); // 12% neg (>= 12%)
+    assert.equal(deriveTone(makeWithNeg(20)), "warning"); // 20% neg (>= 20%)
+    assert.equal(deriveTone(makeWithNeg(35)), "critical"); // 35% neg (>= 35%)
+  });
 });

@@ -34,6 +34,20 @@ export class UnmappedSheetsError extends Error {
   }
 }
 
+export class EmptyImportError extends Error {
+  constructor(message = "No reviews could be recognized in the pasted text.") {
+    super(message);
+    this.name = "EmptyImportError";
+  }
+}
+
+export class InvalidSkuError extends Error {
+  constructor(skuId: string) {
+    super(`Unknown SKU: ${skuId}`);
+    this.name = "InvalidSkuError";
+  }
+}
+
 async function commitParsedReviews({
   parsedReviews,
   rowsRead,
@@ -127,8 +141,16 @@ export async function ingestText(
   text: string,
   filename = "Pasted reviews",
 ): Promise<IngestReport> {
+  if (!skuById(skuId)) {
+    throw new InvalidSkuError(skuId);
+  }
+
   const lines = text.split(/\r?\n/);
   const parsed = parseSheet(skuId, lines);
+
+  if (parsed.length === 0) {
+    throw new EmptyImportError();
+  }
 
   return commitParsedReviews({
     parsedReviews: parsed,

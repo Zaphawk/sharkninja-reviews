@@ -5,16 +5,16 @@
     {
       "skuId": "ninja-blast",
       "tone": "critical",
-      "headline": "Motor durability failures and blade jams depress rating to 3.09★, creating elevated return risk.",
+      "headline": "Motor durability failures and blade jams depress rating to 3.05★, creating elevated return risk.",
       "body": [
-        "The Ninja Blast is Ninja India's highest-volume portable listing with 59 reviews, but customer sentiment is depressed by a 3.09 verified purchase average and a 42% negative review rate. While buyers value its compact cordless design for soft smoothies, durability under daily kitchen usage has triggered substantial negative feedback.",
+        "The Ninja Blast is Ninja India's highest-volume portable listing with 66 reviews, but customer sentiment is depressed by a 3.05 verified purchase average and a 44% negative review rate. While buyers value its compact cordless design for soft smoothies, durability under daily kitchen usage has triggered substantial negative feedback.",
         "Product hardware defects represent 84% of customer complaints: buyers report units shutting down completely within weeks ('stopped working', 'defective piece'), blade jamming on ice cubes, and battery charging failures. After-sales customer service friction and replacement delays exacerbate the low score."
       ],
-      "soWhat": "A 3.09★ average suppresses Amazon organic rank and converts poorly against competing blenders. High motor and battery defect rates risk return spikes and damage brand equity for Ninja's motor engineering in India.",
+      "soWhat": "A 3.05★ verified average suppresses Amazon organic rank and converts poorly against competing blenders. High motor and battery defect rates risk return spikes and damage brand equity for Ninja's motor engineering in India.",
       "watch": "Track 30-day motor failure rate and battery longevity; update product listing with explicit liquid-to-ice guidelines to reduce blade jamming.",
       "evidence": [
-        "57 verified reviews averaging 3.09 stars",
-        "42% negative review rate among verified purchasers",
+        "64 verified reviews averaging 3.05 stars (3.11 overall across 66 reviews)",
+        "44% negative review rate (29 negative reviews)",
         "84% of negative reviews cite motor failure, defective units, or blade jams"
       ],
       "dataHash": "ddcc9cc2fbd5c87e",
@@ -26,14 +26,14 @@
       "tone": "warning",
       "headline": "Strong multi-cook concept dragged below 4.00 overall by 24% negative reviews citing build defects and replacement friction.",
       "body": [
-        "The Ninja Combi records a 4.02 verified purchase average across 65 verified reviews, but overall sentiment across all 72 reviews dips to 3.88. Satisfied buyers praise its combined steam-and-air-fry technology for fast weekday dinners and meal variety.",
+        "The Ninja Combi records a 3.99 verified purchase average across 67 verified reviews (3.85 overall across 74 reviews). Satisfied buyers praise its combined steam-and-air-fry technology for fast weekday dinners and meal variety.",
         "However, 24% of all reviews are 1 or 2 stars. Buyers complain of receiving scratched or repacked units, perceive the exterior finish as cheap relative to the premium price, and express acute frustration over unresponsive after-sales support when requesting replacements."
       ],
-      "soWhat": "A sub-4.00 overall rating (3.88★) depresses Amazon search rank and brand perception for Ninja's premium cooking range in India.",
+      "soWhat": "A sub-4.00 overall rating (3.85★) depresses Amazon search rank and brand perception for Ninja's premium cooking range in India.",
       "watch": "Tighten fulfillment inspection on Amazon to prevent repacked or scratched items reaching buyers, and establish a dedicated replacement hotline.",
       "evidence": [
-        "4.02 verified average across 65 purchases (3.88 overall across 72 reviews)",
-        "24% negative review rate across all customer submissions",
+        "67 verified reviews averaging 3.99 stars (3.85 overall across 74 reviews)",
+        "24% negative review rate across all customer submissions (18 negative reviews)",
         "Top complaint drivers: damaged/used delivery condition and replacement refusal"
       ],
       "dataHash": "1d9f3ddd4b5f01ad",
@@ -43,16 +43,16 @@
     {
       "skuId": "ninja-air-fryer-6-2l",
       "tone": "warning",
-      "headline": "Volume driver slips to 3.86★ overall as 25% negative reviews flag poor customer service and transit damage.",
+      "headline": "Volume driver slips to 3.82★ overall as 26% negative reviews flag poor customer service and transit damage.",
       "body": [
-        "With 81 verified reviews averaging 3.93 stars (3.86 overall across 83 reviews), the 6.2L Air Fryer fails to clear the 4.00 commercial health threshold despite strong capacity and crispy basket performance praised by satisfied buyers.",
-        "One in four reviews (25%) is negative. Dissatisfied customers cite unhelpful customer service ('worst service', refusal of replacements for broken parts), units arriving damaged in transit, and doubts over whether build quality justifies the 10,000+ INR price tag against established domestic alternatives."
+        "With 86 verified reviews averaging 3.88 stars (3.82 overall across 88 reviews), the 6.2L Air Fryer fails to clear the 4.00 commercial health threshold despite strong capacity and crispy basket performance praised by satisfied buyers.",
+        "Over one in four reviews (26%) is negative. Dissatisfied customers cite unhelpful customer service ('worst service', refusal of replacements for broken parts), units arriving damaged in transit, and doubts over whether build quality justifies the 10,000+ INR price tag against established domestic alternatives."
       ],
       "soWhat": "Sub-4.00 ratings in the fiercely contested Indian air fryer category severely reduce conversion against Philips and Havells.",
       "watch": "Improve transit packaging to stop plastic breakage upon arrival and reduce warranty turnaround times.",
       "evidence": [
-        "3.93 verified rating across 81 verified reviews (3.86 overall)",
-        "25% negative review rate (21 negative reviews)",
+        "3.88 verified rating across 86 verified reviews (3.82 overall across 88 reviews)",
+        "26% negative review rate (23 negative reviews)",
         "Key complaint themes: unresponsive customer service and transit breakage"
       ],
       "dataHash": "285c0193225d5262",
@@ -62,20 +62,20 @@
     {
       "skuId": "ninja-dual-zone",
       "tone": "watch",
-      "headline": "Promising dual-basket concept vulnerable to courier handling and transit paint abrasions on small sample size.",
+      "headline": "Promising dual-basket concept vulnerable to courier handling on small sample size (8 verified reviews).",
       "body": [
-        "With only 4 verified reviews (avg 4.00), the Dual Zone air fryer does not yet clear the 10-review statistical confidence threshold. Positive reviews appreciate synchronised cooking zones for family dinners.",
-        "One third of reviews are negative, with specific callouts of chipped exterior paint upon unboxing and delivery packaging failures. The underlying dual-motor heating system receives no mechanical complaints."
+        "With 8 verified reviews (avg 4.00, 4.11 overall across 9 reviews), the Dual Zone air fryer does not yet clear the 10-review statistical confidence threshold. Positive reviews appreciate synchronised cooking zones for family dinners.",
+        "Two reviews (22%) are negative, with specific callouts of chipped exterior paint upon unboxing and delivery packaging failures. The underlying dual-motor heating system receives no mechanical complaints."
       ],
       "soWhat": "Cosmetic transit damage on a premium appliance damages brand perception before the customer plugs the unit in.",
       "watch": "Transit packaging reinforcement and warehouse handling protocols for the dual-basket chassis.",
       "evidence": [
-        "Only 4 verified reviews, placing the SKU in insufficient data status",
-        "33% negative rating share",
-        "100% of negative reviews flag marketplace or delivery transit issues"
+        "8 verified reviews averaging 4.00 stars (9 reviews total, placing SKU in watch status)",
+        "22% negative rating share (2 negative reviews)",
+        "Negative reviews flag delivery transit paint abrasion and packaging issues"
       ],
       "dataHash": "78280b5e2b9e76ad",
-      "generatedAt": "2026-09-08T11:15:00.000Z",
+      "generatedAt": "2026-09-18T11:15:00.000Z",
       "model": "openrouter/anthropic/claude-3.5-sonnet"
     },
     {

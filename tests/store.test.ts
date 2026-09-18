@@ -205,5 +205,21 @@ describe("direct text paste ingest", () => {
     assert.equal(report.perSku[0].skuId, "ninja-blast");
     assert.equal(report.perSku[0].parsed, 1);
   });
+
+  it("rejects unknown SKU with InvalidSkuError", async () => {
+    const { ingestText, InvalidSkuError } = await import("../lib/ingest");
+    await assert.rejects(
+      () => ingestText("non-existent-sku", "Some text"),
+      (err: unknown) => err instanceof InvalidSkuError,
+    );
+  });
+
+  it("rejects text that contains no parseable reviews with EmptyImportError", async () => {
+    const { ingestText, EmptyImportError } = await import("../lib/ingest");
+    await assert.rejects(
+      () => ingestText("ninja-blast", "random text that has no review format"),
+      (err: unknown) => err instanceof EmptyImportError,
+    );
+  });
 });
 

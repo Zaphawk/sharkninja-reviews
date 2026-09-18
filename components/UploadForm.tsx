@@ -32,15 +32,23 @@ export function UploadForm() {
   const [dragging, setDragging] = useState(false);
   const [selectedSku, setSelectedSku] = useState(SKUS[0]?.id ?? "ninja-blast");
   const [pasteText, setPasteText] = useState("");
+  const [debouncedText, setDebouncedText] = useState("");
   const [userPickedSku, setUserPickedSku] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
-  // Instant client-side parsing as user pastes text
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedText(pasteText);
+    }, 200);
+    return () => clearTimeout(handler);
+  }, [pasteText]);
+
+  // Client-side parsing debounced to prevent keypress lag on large review pastes
   const parsedReviews = useMemo(() => {
-    if (!pasteText.trim() || !selectedSku) return [];
-    return parseSheet(selectedSku, pasteText.split(/\r?\n/));
-  }, [selectedSku, pasteText]);
+    if (!debouncedText.trim() || !selectedSku) return [];
+    return parseSheet(selectedSku, debouncedText.split(/\r?\n/));
+  }, [selectedSku, debouncedText]);
 
   // Screen reader live status message
   const liveStatus = useMemo(() => {
@@ -151,6 +159,7 @@ export function UploadForm() {
       }
       setState({ status: "done", reports: json.reports as IngestReport[] });
       setPasteText("");
+      setDebouncedText("");
       router.refresh();
     } catch (err) {
       setState({

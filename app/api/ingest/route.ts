@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
-import { ingestBuffer, ingestText, UnmappedSheetsError } from "@/lib/ingest";
+import {
+  EmptyImportError,
+  InvalidSkuError,
+  ingestBuffer,
+  ingestText,
+  UnmappedSheetsError,
+} from "@/lib/ingest";
 import { ReadOnlyStoreError } from "@/lib/store";
 
 export const runtime = "nodejs";
@@ -40,6 +46,12 @@ export async function POST(req: Request) {
           return NextResponse.json(
             { error: "No review text provided to import." },
             { status: 400 },
+          );
+        }
+        if (body.text.length > 2_000_000) {
+          return NextResponse.json(
+            { error: "Pasted text exceeds maximum size of 2MB." },
+            { status: 413 },
           );
         }
         const report = await ingestText(
@@ -89,6 +101,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, reports });
   } catch (err) {
     // Raised before anything is written, so "nothing was imported" is accurate.
+    if (err instanceof InvalidSkuError || err instanceof EmptyImportError) {
+      return NextResponse.json({ error: err.message }, { status: 400 });
+    }
     if (err instanceof UnmappedSheetsError) {
       return NextResponse.json(
         { error: err.message, unmappedSheets: err.sheets },
